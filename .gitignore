@@ -1,34 +1,19 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# Build
+build/
 *.obj
+*.pdb
 
-# Precompiled Headers
-*.gch
-*.pch
+# Dependencies
+external/
+SDL2-devel.zip
+nestw042.zip
+nesticle_original.zip
+nesticle_tmp/
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# IDE
+.vs/
+*.user
+.gemini/
 
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
-\.DS_Store
+# Releases (binary artifacts)
+releases/
