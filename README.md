@@ -1,16 +1,38 @@
-# NESticle
-The Source Code of the NESticle emulator. Created by Bloodlust Software. It was leaked in 1997 by MindRape.
+# NESticle (Modernized)
 
-# History
-The NESticle emulator was made by Icer Addis which its source code was later leaked by Donald Moore (MindRape). In Early 2019, togemet2 released the source code to the public, and I decided to put the source code here with togemet2's permission.
+A modernization of the NESticle NES emulator (v0.2) originally created by Icer Addis / Bloodlust Software (~1997). This project ports the leaked source code to compile and run on modern Windows using contemporary tools and libraries.
 
-## Can it be compiled?
-I have no clue. We had several attempts at compiling. We're not even sure if this is a completed version!
+## Background
 
-If anyone's interested in helping us compile this source code to DOS/WIN9x or even Modern Windows, you can fork the code from this GitHub repository and make whatever changes you want with it.
+NESticle was one of the earliest and most popular NES emulators for DOS and Windows 95. The source code was leaked in 1997 and later made publicly available. This project preserves the original architecture while replacing obsolete platform dependencies with modern equivalents.
 
-## What are these zip files with cuss words containing more source code about?
-I don't know, the best speculation we have that it's full of versions that Addis, well, fucked up.
+## Modernization Approach
 
-## Copyright
-NESticle is © Bloodlust Software
+| Component | Original (1997) | Modern Replacement |
+|---|---|---|
+| Compiler | Borland C++ / Watcom | MSVC (Visual Studio 2022) |
+| Platform | DOS / Win95 DirectDraw+DirectSound | SDL2 |
+| 6502 CPU | x86 ASM + restrictive C++ core | fake6502 (public domain) |
+| NES APU | Incomplete (3/5 channels) | Blargg's nes_apu (LGPL) |
+| Rendering ASM | TASM/MASM x86 assembly | Portable C implementations |
+
+## Building
+
+### Prerequisites
+- Visual Studio 2022 (MSVC)
+- CMake 3.20+
+- SDL2 development libraries
+
+### Build Steps
+```bash
+cmake -B build -G "Visual Studio 17 2022"
+cmake --build build --config Release
+```
+
+## Status
+
+**Work in Progress** - See [STATE.md](STATE.md) and [ROADMAP.md](ROADMAP.md) for current progress.
+
+## License
+
+NESticle is (c) Bloodlust Software. The original source was leaked and has no clear open-source license. Modern replacement components (fake6502, Blargg's APU, SDL2) carry their own permissive licenses.
