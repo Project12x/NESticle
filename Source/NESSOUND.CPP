@@ -255,8 +255,8 @@ void noisewave::mix16(short *b, int nums) {
   int cycles_per_sample = 1789773 / SOUNDRATE; // ~81 for 22050 Hz
 
   for (int i = 0; i < nums && dur > 0; i++, dur--) {
-    // Output based on bit 0 of LFSR
-    b[i] += (lfsr & 1) ? vol : -vol;
+    // Output based on bit 0 of LFSR (unipolar like real NES hardware)
+    b[i] += (lfsr & 1) ? (vol * 3 / 5) : 0;
 
     // Accumulate CPU cycles for this sample and clock LFSR accordingly
     timer += cycles_per_sample;
