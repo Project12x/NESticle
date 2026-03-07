@@ -437,7 +437,7 @@ void nesvideo::drawbg(char *dest, lrect *r, byte sprites) {
 inline void NES_sprite::draw_8x8(char *dest, patterntable &pt) {
   if (x < SCREENX && y < SCREENY + STARTFRAME)
     pt[p].draw_sprite(dest, x, y + 1 - STARTFRAME,
-                      (flipx & 1) | ((flipy & 1) << 1), behindbg, attrib);
+                      (flipx & 1) | ((flipy & 1) << 1), behindbg, attrib & 3);
 }
 
 inline void NES_sprite::draw_8x16(char *dest, patterntable *ptn) {
@@ -448,10 +448,9 @@ inline void NES_sprite::draw_8x16(char *dest, patterntable *ptn) {
     patterntable &pt = ptn[p & 1]; ////nv->sc.biggestsc->ptn[p&1]; //get pattern
                                    /// from last screen context
 
-    pt[pnum].draw_sprite(dest, x, y + 1 - STARTFRAME, fx | (fy << 1), behindbg,
-                         attrib);
+    pt[pnum].draw_sprite(dest, x, y + 1 - STARTFRAME, fx | (fy << 1), behindbg, attrib & 3);
     pt[pnum ^ 1].draw_sprite(dest, x, y + 1 + 8 - STARTFRAME, fx | (fy << 1),
-                             behindbg, attrib);
+                             behindbg, attrib & 3);
   }
 }
 
