@@ -28,10 +28,11 @@ extern "C" {
 
 // -----------------------------------------------------------
 // draw_tile_asm - Draw an 8x8 tile with palette offset
+// BG tiles use CBASE (224) + pal*4, NO +16 offset
 // -----------------------------------------------------------
 void __cdecl draw_tile_asm(bitmap8x8 *b, char *dest, int x, int y,
                            unsigned char pal) {
-  unsigned char colorbase = (pal << 2) | (224 + 16);
+  unsigned char colorbase = 224 + (pal << 2);
 
   for (int row = 0; row < 8; row++) {
     int dy = y + row;
@@ -52,10 +53,11 @@ void __cdecl draw_tile_asm(bitmap8x8 *b, char *dest, int x, int y,
 // -----------------------------------------------------------
 // draw_sprite_asm - Draw an 8x8 sprite with transparency,
 //                   orientation (flip X/Y), and clipping
+// Sprites use CBASE+16 (240) + pal*4
 // -----------------------------------------------------------
 void __cdecl draw_sprite_asm(bitmap8x8 *b, char *dest, int x, int y, int o,
                              unsigned char pal) {
-  unsigned char colorbase = (pal << 2) | (224 + 16);
+  unsigned char colorbase = 240 + (pal << 2);
   int flipx = o & 1;
   int flipy = o & 2;
 
@@ -83,7 +85,7 @@ void __cdecl draw_sprite_asm(bitmap8x8 *b, char *dest, int x, int y, int o,
 // -----------------------------------------------------------
 void __cdecl draw_sprite_behind_asm(bitmap8x8 *b, char *dest, int x, int y,
                                     int o, unsigned char pal) {
-  unsigned char colorbase = (pal << 2) | (224 + 16);
+  unsigned char colorbase = 240 + (pal << 2);
   int flipx = o & 1;
   int flipy = o & 2;
 

@@ -7,7 +7,6 @@
 #include <string.h>
 #include <string.h> // was mem.h (Borland-specific)
 
-
 #include "config.h"
 
 #include "keyb.h"
@@ -16,18 +15,15 @@
 #include "r2img.h"
 #include "types.h"
 
-
 #include "file.h"
 #include "message.h"
 #include "mouse.h"
 #include "vol.h"
 
-
 #include "dd.h"
 
 #include "gui.h"
 #include "guivol.h"
-
 
 #include "uutimer.h"
 
@@ -35,7 +31,6 @@
 #include "nessound.h"
 #include "nesvideo.h"
 #include "timing.h"
-
 
 #include "command.h"
 
@@ -169,6 +164,7 @@ void terminategame() {
 }
 
 void tickemu(); // tick emulation
+extern int SOUNDRATE;
 void gametimer() {
   uu++;
   input::refreshtimer();
@@ -179,6 +175,12 @@ void gametimer() {
     tickemu();
     if (CPUtickframe > 0)
       CPUtickframe--;
+  }
+
+  // Generate NES audio samples for this tick
+  if (ns) {
+    int samples_per_tick = SOUNDRATE / TIMERSPEED;
+    ns->update(samples_per_tick);
   }
 }
 
