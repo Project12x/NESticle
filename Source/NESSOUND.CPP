@@ -249,15 +249,19 @@ void noisewave::mix16(short *b, int nums) {
 
   int mode_short = r[2] & 0x80; // bit 7: 0=long (32767), 1=short (93)
 
+  // CPU cycles per audio sample: NTSC CPU 1789773 Hz / SOUNDRATE
+  // Use fixed-point: cycles_per_sample = 1789773 / SOUNDRATE
+  int cycles_per_sample = 1789773 / SOUNDRATE; // ~81 for 22050 Hz
+
   for (int i = 0; i < nums && dur > 0; i++, dur--) {
     // Output based on bit 0 of LFSR
     b[i] += (lfsr & 1) ? vol : -vol;
 
-    // Clock the LFSR at the period rate
-    timer--;
-    if (timer <= 0) {
-      timer = period;
-      // Feedback: XOR bit 0 with bit 1 (short) or bit 6 (long)
+    // Accumulate CPU cycles for this sample and clock LFSR accordingly
+    timer += cycles_per_sample;
+    while (timer >= period) {
+      timer -= period;
+      // Feedback: XOR bit 0 with bit 6 (short) or bit 1 (long)
       int feedback;
       if (mode_short)
         feedback = (lfsr & 1) ^ ((lfsr >> 6) & 1);
