@@ -24,6 +24,7 @@ static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
 // NESticle headers
 #include "command.h"
 #include "config.h"
+#include "cursor_frames.h"
 #include "dd.h"
 #include "guivol.h"
 #include "keyb.h"
@@ -34,6 +35,7 @@ static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
 #include "r2img.h"
 #include "sound.h"
 #include "timing.h"
+
 
 // Functions supplied by the game (MAIN.CPP)
 int initgame();
@@ -731,6 +733,34 @@ int main(int argc, char *argv[]) {
       }
 
       convert_screen_to_argb();
+
+      // Draw animated cursor overlay directly to ARGB framebuffer
+      // This replaces the static guivol.cursor with a 4-frame animation
+      // from the original NESticle cursor
+      if (!m.hidden) {
+        static int cursor_frame = 0;
+        static unsigned last_uu = 0;
+        if (uu - last_uu >= 12) {
+          cursor_frame = (cursor_frame + 1) % CURSOR_FRAME_COUNT;
+          last_uu = uu;
+        }
+        const unsigned int *frame = cursor_frames[cursor_frame];
+        for (int cy = 0; cy < CURSOR_FRAME_H; cy++) {
+          int sy = m.y + cy;
+          if (sy < 0 || sy >= SCREENY)
+            continue;
+          for (int cx = 0; cx < CURSOR_FRAME_W; cx++) {
+            int sx = m.x + cx;
+            if (sx < 0 || sx >= SCREENX)
+              continue;
+            unsigned int pixel = frame[cy * CURSOR_FRAME_W + cx];
+            if (pixel & 0xFF000000) { // non-transparent
+              sdl_framebuffer[sy * SCREENX + sx] = pixel;
+            }
+          }
+        }
+      }
+
       SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
                         SCREENX * sizeof(Uint32));
       SDL_RenderClear(sdl_renderer);
