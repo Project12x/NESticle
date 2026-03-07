@@ -17,6 +17,14 @@ SDL2-devel.zip
 nestw042.zip
 nesticle_original.zip
 nesticle_tmp/
+nestc042.zip
+nestc042/
+nestcxxx.zip
+nestcxxx/
+nesticle-theme/
+
+# Reference code (not part of build)
+Source/_SOUND_EXTRACT/
 
 # IDE
 .vs/
