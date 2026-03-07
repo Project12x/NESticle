@@ -3,13 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "dd.h"
 #include "font.h"
 #include "gui.h"
 #include "input.h"
 #include "r2img.h"
-
 
 // #include "object.h"
 // #include "objdef.h"
@@ -199,6 +197,8 @@ protected:
 public:
   changeinputdevice(int num, INPUTPTR &tin)
       : GUIcontents(220, 135), in(tin), inputnum(num) {
+    fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num, (void *)in);
+    fflush(stderr);
     new GUIstatictext(this, 1, "Input type:", 5, 3);
     list = new GUIstringlistbox(this, 5, 15, 110, NUMINPUTTYPES, 10);
     edit = save = 0;
@@ -223,11 +223,16 @@ public:
   }
 
   void changedevice(int type) {
+    fprintf(stderr, "[INPUT] changedevice(%d) old_in=%p\n", type, (void *)in);
+    fflush(stderr);
     disable();
     if (in)
       delete in;
     in = newinputdevice(type);
-    in->bind(lasto);
+    fprintf(stderr, "[INPUT] newinputdevice returned %p\n", (void *)in);
+    fflush(stderr);
+    if (in)
+      in->bind(lasto);
     enable();
   }
 

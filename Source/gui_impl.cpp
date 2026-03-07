@@ -1,6 +1,19 @@
 // gui_impl.cpp - Reconstructed GUI system implementation for NESticle
 // The original GUI implementation was never included in the source release.
 
+// Define GUI_DEBUG to enable widget coordinate/lifecycle logging to stderr
+#define GUI_DEBUG
+#ifdef GUI_DEBUG
+#define GUI_LOG(...)                                                           \
+  do {                                                                         \
+    fprintf(stderr, "[GUI] ");                                                 \
+    fprintf(stderr, __VA_ARGS__);                                              \
+    fprintf(stderr, "\n");                                                     \
+    fflush(stderr);                                                            \
+  } while (0)
+#else
+#define GUI_LOG(...) ((void)0)
+#endif
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +67,8 @@ GUIrect::GUIrect(GUIrect *p, int tx1, int ty1, int tx2, int ty2) {
   y2 = ty2;
   if (p)
     link(p);
+  GUI_LOG("new GUIrect name=%s coords=(%d,%d)-(%d,%d) parent=%s", getname(), x1,
+          y1, x2, y2, p ? p->getname() : "none");
 }
 
 void GUIrect::link(GUIrect *p) {
@@ -597,6 +612,8 @@ GUIbox::GUIbox(GUIrect *p, char *titlestr, GUIcontents *c, int x, int y)
   c->reparent(this);
   c->moverel(2, 14);
   close = new GUIimagebutton(this, guivol.xmark, width() - 12, 2);
+  GUI_LOG("GUIbox '%s' content at (%d,%d)-(%d,%d) close at (%d,%d)", title,
+          c->x1, c->y1, c->x2, c->y2, close->x1, close->y1);
 }
 void GUIbox::settitle(char *s) {
   strncpy(title, s, 79);
@@ -961,6 +978,8 @@ GUIlistbox::GUIlistbox(GUIrect *p, int x, int y, int xw, int iy, int iheight)
   itemv = iy;
   depressed = 0;
   scroll = new GUIvscrollbar(this, xw - 12, 0, iy * iheight + 2);
+  GUI_LOG("GUIlistbox at (%d,%d)-(%d,%d) scroll at (%d,%d)-(%d,%d)", x1, y1, x2,
+          y2, scroll->x1, scroll->y1, scroll->x2, scroll->y2);
 }
 void GUIlistbox::freeitems() {
   if (items) {
@@ -1271,6 +1290,8 @@ GUIpopupmenu::~GUIpopupmenu() {
     current_hmenu_popup = 0;
 }
 int GUIpopupmenu::domenuitem(menuitem *t) {
+  GUI_LOG("popup.domenuitem: text='%s' submenu=%p func=%p",
+          t->text ? t->text : "(null)", (void *)t->submenu, (void *)t->func);
   if (t->submenu) {
     // Open submenu as a new standalone popup, replacing this one
     extern GUIroot *guiroot;
@@ -1289,6 +1310,8 @@ int GUIpopupmenu::domenuitem(menuitem *t) {
   return r;
 }
 int GUIpopupmenu::release(mouse &m) {
+  GUI_LOG("popup.release: selmi=%p text='%s'", (void *)selmi,
+          selmi && selmi->text ? selmi->text : "(none)");
   if (selmi) {
     menuitem *saved = selmi;
     selmi = 0;
