@@ -1272,13 +1272,17 @@ GUIpopupmenu::~GUIpopupmenu() {
 }
 int GUIpopupmenu::domenuitem(menuitem *t) {
   if (t->submenu) {
-    // Open cascading submenu — parent to this popup for auto-cleanup
-    // Position at right edge of this popup, at mouse Y
-    GUIpopupmenu *sub = new GUIpopupmenu(this, t->submenu, x2, y1);
-    fprintf(stderr, "[POPUP] opened cascading submenu at (%d,%d) for '%s'\n",
-            x2, y1, t->text ? t->text : "(null)");
-    fflush(stderr);
-    return 0; // don't delete this popup
+    // Open submenu as a new standalone popup, replacing this one
+    extern GUIroot *guiroot;
+    extern GUIpopupmenu *current_hmenu_popup;
+    int popup_x = x2;
+    int popup_y = y1;
+    menu *sub = t->submenu;
+    // Delete ourselves first (sets current_hmenu_popup to 0 via destructor)
+    delete this;
+    // Create new popup as the current one
+    current_hmenu_popup = new GUIpopupmenu(guiroot, sub, popup_x, popup_y);
+    return 0;
   }
   int r = GUImenu::domenuitem(t);
   delete this;
@@ -1288,22 +1292,9 @@ int GUIpopupmenu::release(mouse &m) {
   if (selmi) {
     menuitem *saved = selmi;
     selmi = 0;
-    if (saved->submenu) {
-      // Delete any existing cascade child first
-      while (child)
-        delete child;
-      // Open cascading submenu as child
-      GUIpopupmenu *sub = new GUIpopupmenu(this, saved->submenu, x2, m.y);
-      fprintf(stderr, "[POPUP] release: opened cascade for '%s' at (%d,%d)\n",
-              saved->text ? saved->text : "(null)", x2, m.y);
-      fflush(stderr);
-      return 1; // release capture so hittest can find cascade popup
-    }
-    domenuitem(saved);
-    return 1;
+    return domenuitem(saved);
   }
-  // No item selected — release capture but don't self-delete
-  // (hmenu::release handles popup lifecycle)
+  // Click outside any item — close the popup
   return 1;
 }
 void GUIpopupmenu::draw(char *dest) { GUIvmenu::draw(dest); }
