@@ -1001,7 +1001,7 @@ GUIrect *GUIlistbox::click(mouse &m) {
     sel = item;
     if (parent)
       parent->sendmessage(this, GUIMSG_LISTBOXSELCHANGED);
-    if (oldsel == sel && dblclick.check())
+    if (oldsel == sel && !dblclick.check())
       if (parent)
         parent->sendmessage(this, GUIMSG_LISTBOXDBLCLICKED);
     dblclick.set(300);
