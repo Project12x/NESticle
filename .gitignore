@@ -2,6 +2,14 @@
 build/
 *.obj
 *.pdb
+*.ilk
+*.lib
+*.exp
+
+# ROMs and save data (copyrighted)
+*.nes
+*.sav
+*.sta
 
 # Dependencies
 external/
@@ -12,8 +20,22 @@ nesticle_tmp/
 
 # IDE
 .vs/
+.vscode/
 *.user
 .gemini/
+compile_commands.json
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs
+*.log
 
 # Releases (binary artifacts)
 releases/
+
+# Language server
+.clangd
+.cache/
