@@ -28,12 +28,27 @@ extern "C" {
 
 // -----------------------------------------------------------
 // draw_tile_asm - Draw an 8x8 tile with palette offset
-// BG tiles use CBASE (224) + pal*4, NO +16 offset
+// BG tiles use CBASE (224) + pal*4. NO transparency check —
+// all pixels are drawn including pixel value 0.
+// Original ASM: 'or dl,224' then DWORD writes, no per-pixel check.
 // -----------------------------------------------------------
 void __cdecl draw_tile_asm(bitmap8x8 *b, char *dest, int x, int y,
                            unsigned char pal) {
   unsigned char colorbase = 224 + (pal << 2);
 
+  // Fast path: entirely on-screen, no clipping needed
+  if (x >= 0 && x + 8 <= SCREENX && y >= 0 && y + 8 <= SCREENY) {
+    char *dp = dest + y * PITCH + x;
+    for (int row = 0; row < 8; row++) {
+      for (int col = 0; col < 8; col++) {
+        dp[col] = (char)(b->s[row][col] | colorbase);
+      }
+      dp += PITCH;
+    }
+    return;
+  }
+
+  // Slow path: clipped
   for (int row = 0; row < 8; row++) {
     int dy = y + row;
     if (dy < 0 || dy >= SCREENY)
@@ -42,10 +57,7 @@ void __cdecl draw_tile_asm(bitmap8x8 *b, char *dest, int x, int y,
       int dx = x + col;
       if (dx < 0 || dx >= SCREENX)
         continue;
-      unsigned char pixel = b->s[row][col];
-      if (pixel == 0)
-        continue; // transparent
-      dest[dy * PITCH + dx] = (char)(pixel | colorbase);
+      dest[dy * PITCH + dx] = (char)(b->s[row][col] | colorbase);
     }
   }
 }
@@ -61,6 +73,23 @@ void __cdecl draw_sprite_asm(bitmap8x8 *b, char *dest, int x, int y, int o,
   int flipx = o & 1;
   int flipy = o & 2;
 
+  // Fast path: entirely on-screen
+  if (x >= 0 && x + 8 <= SCREENX && y >= 0 && y + 8 <= SCREENY) {
+    char *dp = dest + y * PITCH + x;
+    for (int row = 0; row < 8; row++) {
+      int sy = flipy ? (7 - row) : row;
+      for (int col = 0; col < 8; col++) {
+        int sx = flipx ? (7 - col) : col;
+        unsigned char pixel = b->s[sy][sx];
+        if (pixel != 0)
+          dp[col] = (char)(pixel | colorbase);
+      }
+      dp += PITCH;
+    }
+    return;
+  }
+
+  // Clipped path
   for (int row = 0; row < 8; row++) {
     int sy = flipy ? (7 - row) : row;
     int dy = y + row;
@@ -72,9 +101,8 @@ void __cdecl draw_sprite_asm(bitmap8x8 *b, char *dest, int x, int y, int o,
       if (dx < 0 || dx >= SCREENX)
         continue;
       unsigned char pixel = b->s[sy][sx];
-      if (pixel == 0)
-        continue; // transparent
-      dest[dy * PITCH + dx] = (char)(pixel | colorbase);
+      if (pixel != 0)
+        dest[dy * PITCH + dx] = (char)(pixel | colorbase);
     }
   }
 }
@@ -89,6 +117,26 @@ void __cdecl draw_sprite_behind_asm(bitmap8x8 *b, char *dest, int x, int y,
   int flipx = o & 1;
   int flipy = o & 2;
 
+  // Fast path: entirely on-screen
+  if (x >= 0 && x + 8 <= SCREENX && y >= 0 && y + 8 <= SCREENY) {
+    char *dp = dest + y * PITCH + x;
+    for (int row = 0; row < 8; row++) {
+      int sy = flipy ? (7 - row) : row;
+      for (int col = 0; col < 8; col++) {
+        int sx = flipx ? (7 - col) : col;
+        unsigned char pixel = b->s[sy][sx];
+        if (pixel != 0) {
+          unsigned char existing = (unsigned char)dp[col];
+          if (existing == 0 || (existing & 0x03) == 0)
+            dp[col] = (char)(pixel | colorbase);
+        }
+      }
+      dp += PITCH;
+    }
+    return;
+  }
+
+  // Clipped path
   for (int row = 0; row < 8; row++) {
     int sy = flipy ? (7 - row) : row;
     int dy = y + row;
@@ -100,13 +148,11 @@ void __cdecl draw_sprite_behind_asm(bitmap8x8 *b, char *dest, int x, int y,
       if (dx < 0 || dx >= SCREENX)
         continue;
       unsigned char pixel = b->s[sy][sx];
-      if (pixel == 0)
-        continue; // transparent
-      // Only draw behind - don't overwrite existing non-zero pixels
-      unsigned char existing = (unsigned char)dest[dy * PITCH + dx];
-      if (existing != 0 && (existing & 0x03) != 0)
-        continue;
-      dest[dy * PITCH + dx] = (char)(pixel | colorbase);
+      if (pixel != 0) {
+        unsigned char existing = (unsigned char)dest[dy * PITCH + dx];
+        if (existing == 0 || (existing & 0x03) == 0)
+          dest[dy * PITCH + dx] = (char)(pixel | colorbase);
+      }
     }
   }
 }
