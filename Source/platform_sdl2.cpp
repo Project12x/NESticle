@@ -36,7 +36,6 @@ static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
 #include "sound.h"
 #include "timing.h"
 
-
 // Functions supplied by the game (MAIN.CPP)
 int initgame();
 void updatescreen();
@@ -67,7 +66,7 @@ static SDL_Renderer *sdl_renderer = nullptr;
 static SDL_Texture *sdl_texture = nullptr;
 static Uint32 *sdl_framebuffer = nullptr;
 static unsigned char *sdl_screen = nullptr;
-static SDL_Color sdl_palette[256];
+SDL_Color sdl_palette[256];
 
 // Sound
 extern "C" {
@@ -110,6 +109,15 @@ void setpalettenum(int index, COLOR *c) {
   sdl_palette[index].r = c->r;
   sdl_palette[index].g = c->g;
   sdl_palette[index].b = c->b;
+  sdl_palette[index].a = 255;
+}
+
+// Accessible from asm_replacements.cpp without SDL_Color type
+extern "C" void sdl_set_palette_entry(int index, unsigned char r,
+                                      unsigned char g, unsigned char b) {
+  sdl_palette[index].r = r;
+  sdl_palette[index].g = g;
+  sdl_palette[index].b = b;
   sdl_palette[index].a = 255;
 }
 

@@ -216,16 +216,31 @@ void __cdecl drawvline(char *d, int color, int x, int y, int y2) {
   }
 }
 
-// Palette loading stubs (palette is handled by SDL2 in the platform layer)
+// Palette loading - update sdl_palette via extern C function in
+// platform_sdl2.cpp
+extern "C" void sdl_set_palette_entry(int index, unsigned char r,
+                                      unsigned char g, unsigned char b);
+
+// loadpalette8: 8-bit palette data (0-255 per component)
 void __cdecl loadpalette8(void *c, int first, int num) {
-  (void)c;
-  (void)first;
-  (void)num;
+  if (!c)
+    return;
+  unsigned char *p = (unsigned char *)c;
+  for (int i = 0; i < num; i++) {
+    sdl_set_palette_entry(first + i, p[i * 3 + 0], p[i * 3 + 1], p[i * 3 + 2]);
+  }
 }
+
+// loadpalette6: 6-bit VGA palette data (0-63 per component, scale to 0-255)
 void __cdecl loadpalette6(void *c, int first, int num) {
-  (void)c;
-  (void)first;
-  (void)num;
+  if (!c)
+    return;
+  unsigned char *p = (unsigned char *)c;
+  for (int i = 0; i < num; i++) {
+    sdl_set_palette_entry(first + i, (p[i * 3 + 0] & 63) * 255 / 63,
+                          (p[i * 3 + 1] & 63) * 255 / 63,
+                          (p[i * 3 + 2] & 63) * 255 / 63);
+  }
 }
 
 // drawscr - uncompressed bitmap blit (replaces ASM version)
