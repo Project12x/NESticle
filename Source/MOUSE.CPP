@@ -2,6 +2,7 @@
 #include "gui.h"
 #include "mouse.h"
 
+#include "dd.h"
 #include "guivol.h"
 #include "message.h"
 #include "r2img.h"
@@ -64,21 +65,33 @@ void mouse::updatebut(int newb) {
 
 void mouse::draw(char *dest) {
   if (!hidden && guivol.cursor) {
-    // Blood drip animation: cycle palette indices 34->38->42->34
-    // on the cursor's RLE pixel data every 20 ticks
+    // Blood drip animation: rotate COLOR VALUES at palette indices 34, 38, 42
+    // The cursor has blood drip shapes at different positions, each using a
+    // different palette index. By rotating which index holds the "bright red"
+    // vs "dark red" color, different drip positions light up in sequence,
+    // creating the downward dripping illusion.
     static uutimer drip;
     static bool drip_initialized = false;
+    static int drip_phase = 0;
     if (!drip_initialized) {
       drip.set(20);
       drip_initialized = true;
     }
     if (drip.check()) {
-      // Rotate blood colors: 34->38->42->34
-      // Use a temp index (255) to avoid overwrite conflicts
-      guivol.cursor->convertcolor(42, 255); // 42 -> temp
-      guivol.cursor->convertcolor(38, 42);  // 38 -> 42
-      guivol.cursor->convertcolor(34, 38);  // 34 -> 38
-      guivol.cursor->convertcolor(255, 34); // temp -> 34
+      drip_phase = (drip_phase + 1) % 3;
+      // Original blood colors (after <<2 fixup from gui.vol):
+      // pal[34] = (224,0,0) bright red
+      // pal[38] = (176,0,0) medium red
+      // pal[42] = (124,0,0) dark red
+      static COLOR blood_colors[3] = {
+          {(unsigned char)224, 0, 0}, // bright
+          {(unsigned char)176, 0, 0}, // medium
+          {(unsigned char)124, 0, 0}  // dark
+      };
+      // Rotate which color goes to which index
+      setpalettenum(34, &blood_colors[(0 + drip_phase) % 3]);
+      setpalettenum(38, &blood_colors[(1 + drip_phase) % 3]);
+      setpalettenum(42, &blood_colors[(2 + drip_phase) % 3]);
       drip.set(20);
     }
     guivol.cursor->draw(dest, x, y);
