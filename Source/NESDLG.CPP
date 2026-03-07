@@ -1,7 +1,9 @@
+#include <direct.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 
 
 #include "types.h"
@@ -10,13 +12,11 @@
 #include "font.h"
 #include "r2img.h"
 
-
 #include "gui.h"
 #include "guicolor.h"
 #include "guimenu.h"
 #include "message.h"
 #include "mouse.h"
-
 
 #include "file.h"
 
@@ -29,7 +29,6 @@
 #include "nessound.h"
 #include "nesvideo.h"
 #include "sound.h"
-
 
 #include "slist.h"
 
@@ -54,6 +53,7 @@ void enablegui();
 typedef int(USERENTRY *qsortfuncptr)(const void *, const void *);
 
 int filldirlistbox(char *filename, class GUIdirlistbox *b);
+int filldirlistbox_dirs(char *filename, class GUIdirlistbox *b);
 
 int USERENTRY dirlistcmp(char **a, char **b) { return stricmp(*a, *b); }
 
@@ -63,12 +63,22 @@ class GUIdirlistbox : public GUIstringlistbox {
 public:
   void sortdirlist() // sort all entries in list
   {
-    qsort((void *)getitems(), getnumitems(), 4, (qsortfuncptr)dirlistcmp);
+    qsort((void *)getitems(), getnumitems(), sizeof(ITEMPTR),
+          (qsortfuncptr)dirlistcmp);
   }
+
+  char *getpath() { return path; }
 
   void setpath(char *_path) {
     strcpy(path, _path); // set path
     freeitems();
+    // Add parent directory entry
+    int num = getnumitems();
+    char **s = (char **)resizeitems(num + 1);
+    s[num] = strdup("..");
+    // Add subdirectories
+    enumdir("*", (DIRFUNCPTR)filldirlistbox_dirs, this);
+    // Add matching files
     enumdir(path, (DIRFUNCPTR)filldirlistbox, this); // fill dir list box
     sortdirlist();
   }
@@ -89,6 +99,23 @@ int filldirlistbox(char *filename, GUIdirlistbox *b) {
   return 1;
 }
 
+// Callback for directory enumeration — only adds directories (entries with no
+// extension)
+int filldirlistbox_dirs(char *filename, GUIdirlistbox *b) {
+  struct _stat st;
+  if (_stat(filename, &st) == 0 && (st.st_mode & _S_IFDIR)) {
+    if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0)
+      return 1; // skip . and .. (we add .. manually)
+    // Add directory with brackets
+    char direntry[140];
+    snprintf(direntry, sizeof(direntry), "[%s]", filename);
+    int num = b->getnumitems();
+    char **s = (char **)b->resizeitems(num + 1);
+    s[num] = strdup(direntry);
+  }
+  return 1;
+}
+
 //----------------------
 //   load rom
 //----------------------
@@ -105,7 +132,30 @@ public:
 
   int sendmessage(GUIrect *c, int guimsg) {
     if (guimsg == GUIMSG_OK || guimsg == GUIMSG_LISTBOXDBLCLICKED) {
-      loadrom(list->getselptr());
+      char *sel = list->getselptr();
+      if (!sel)
+        return 1;
+      // Handle parent directory
+      if (strcmp(sel, "..") == 0) {
+        _chdir("..");
+        ((GUIdirlistbox *)list)->setpath("*.nes");
+        list->setsel(0);
+        return 1;
+      }
+      // Handle subdirectory [dirname]
+      if (sel[0] == '[') {
+        char dirname[128];
+        strncpy(dirname, sel + 1, sizeof(dirname) - 1);
+        dirname[sizeof(dirname) - 1] = 0;
+        char *bracket = strchr(dirname, ']');
+        if (bracket)
+          *bracket = 0;
+        _chdir(dirname);
+        ((GUIdirlistbox *)list)->setpath("*.nes");
+        list->setsel(0);
+        return 1;
+      }
+      loadrom(sel);
       return 1;
     }
     return 1;
