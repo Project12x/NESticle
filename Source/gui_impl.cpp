@@ -1297,7 +1297,7 @@ int GUIpopupmenu::release(mouse &m) {
       fprintf(stderr, "[POPUP] release: opened cascade for '%s' at (%d,%d)\n",
               saved->text ? saved->text : "(null)", x2, m.y);
       fflush(stderr);
-      return 0; // release capture so user can click on cascade
+      return 1; // release capture so hittest can find cascade popup
     }
     domenuitem(saved);
     return 1;
