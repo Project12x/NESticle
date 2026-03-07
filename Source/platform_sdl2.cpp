@@ -575,6 +575,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+#ifdef _WIN32
+  // Set Windows timer resolution to 1ms for accurate 60Hz frame timing
+  timeBeginPeriod(1);
+#endif
+
   // Auto-detect DPI scale: use 3x for 4K+, 2x otherwise
   float ddpi = 0;
   if (SDL_GetDisplayDPI(0, &ddpi, nullptr, nullptr) == 0 && ddpi > 144.0f)
@@ -603,8 +608,7 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  sdl_renderer = SDL_CreateRenderer(
-      sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
   if (!sdl_renderer)
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
   // Use nearest-neighbor for crisp pixel art scaling
@@ -765,8 +769,6 @@ int main(int argc, char *argv[]) {
         SDL_RenderPresent(sdl_renderer);
         framecount++;
         g_framecount = framecount;
-      } else {
-        SDL_Delay(1); // Yield CPU when no timer ticks needed
       }
     }
   } // end while loop
