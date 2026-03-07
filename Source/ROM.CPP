@@ -59,7 +59,7 @@ void freerom();
 void m_reset();
 
 // rom filename (without extension) eg "CASTLEVA"
-char romfilename[128];
+char romfilename[512];
 
 //-----------------------------------------------------
 // NES rom loader
@@ -72,12 +72,14 @@ void loadrom(char *romfile) {
   freerom();
 
   // get rom name without extension
-  strcpy(romfilename, romfile);
+  strncpy(romfilename, romfile, sizeof(romfilename) - 1);
+  romfilename[sizeof(romfilename) - 1] = 0;
   if (strchr(romfilename, '.'))
     *strchr(romfilename, '.') = 0;
 
-  char s[64];
-  strcpy(s, romfilename);
+  char s[512];
+  strncpy(s, romfilename, sizeof(s) - 5);
+  s[sizeof(s) - 5] = 0;
   strcat(s, ".nes"); // add extension
 
   msg.printf(2, "Loading rom %s...", s);
@@ -95,8 +97,9 @@ void loadrom(char *romfile) {
 
   // see if header file exists ?
   FILEIO g;
-  char hdrfile[64];
-  strcpy(hdrfile, romfilename);
+  char hdrfile[512];
+  strncpy(hdrfile, romfilename, sizeof(hdrfile) - 5);
+  hdrfile[sizeof(hdrfile) - 5] = 0;
   strcat(hdrfile, ".hdr");
   if (!g.open(hdrfile)) // does header file exist?
   {

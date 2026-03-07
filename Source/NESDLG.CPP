@@ -57,7 +57,7 @@ int filldirlistbox_dirs(char *filename, class GUIdirlistbox *b);
 int USERENTRY dirlistcmp(char **a, char **b) { return stricmp(*a, *b); }
 
 class GUIdirlistbox : public GUIstringlistbox {
-  char path[128];
+  char path[512];
 
 public:
   void sortdirlist() // sort all entries in list
@@ -69,7 +69,8 @@ public:
   char *getpath() { return path; }
 
   void setpath(char *_path) {
-    strcpy(path, _path); // set path
+    strncpy(path, _path, sizeof(path) - 1);
+    path[sizeof(path) - 1] = 0;
     freeitems();
     // Add parent directory entry
     int num = getnumitems();
@@ -106,7 +107,7 @@ int filldirlistbox_dirs(char *filename, GUIdirlistbox *b) {
     if (strcmp(filename, ".") == 0 || strcmp(filename, "..") == 0)
       return 1; // skip . and .. (we add .. manually)
     // Add directory with brackets
-    char direntry[140];
+    char direntry[530];
     snprintf(direntry, sizeof(direntry), "[%s]", filename);
     int num = b->getnumitems();
     char **s = (char **)b->resizeitems(num + 1);
@@ -147,7 +148,7 @@ public:
       }
       // Handle subdirectory [dirname]
       if (sel[0] == '[') {
-        char dirname[128];
+        char dirname[512];
         strncpy(dirname, sel + 1, sizeof(dirname) - 1);
         dirname[sizeof(dirname) - 1] = 0;
         char *bracket = strchr(dirname, ']');
