@@ -1,13 +1,9 @@
-
 #include "gui.h"
 #include "mouse.h"
 
-#include "dd.h"
 #include "guivol.h"
 #include "message.h"
 #include "r2img.h"
-#include "uutimer.h"
-#include <cstdio>
 
 mouse::mouse() {
   oldb = 0;
