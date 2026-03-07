@@ -821,8 +821,8 @@ int GUIscrollbar::sendmessage(GUIrect *c, int msg) {
 // ---- GUIvscrollbar ----
 GUIvscrollbar::GUIvscrollbar(GUIrect *p, int x, int y, int h)
     : GUIscrollbar(p, x, y, 12, h) {
-  up = new GUIimagebutton(this, guivol.umark, 0, 0);
-  down = new GUIimagebutton(this, guivol.dmark, 0, h - 12);
+  up = new GUIimagebutton(this, guivol.umark, x1, y1);
+  down = new GUIimagebutton(this, guivol.dmark, x1, y1 + h - 12);
   track = new GUIvtrack(this);
 }
 int GUIvscrollbar::keyhit(char scan, char key) {
@@ -840,8 +840,8 @@ int GUIvscrollbar::keyhit(char scan, char key) {
 // ---- GUIhscrollbar ----
 GUIhscrollbar::GUIhscrollbar(GUIrect *p, int x, int y, int w)
     : GUIscrollbar(p, x, y, w, 12) {
-  up = new GUIimagebutton(this, guivol.lmark, 0, 0);
-  down = new GUIimagebutton(this, guivol.rmark, w - 12, 0);
+  up = new GUIimagebutton(this, guivol.lmark, x1, y1);
+  down = new GUIimagebutton(this, guivol.rmark, x1 + w - 12, y1);
   track = new GUIhtrack(this);
 }
 int GUIhscrollbar::keyhit(char scan, char key) {
@@ -892,7 +892,7 @@ void GUItrack::draw(char *dest) {
 
 // ---- GUIvtrack / GUIhtrack ----
 GUIvtrack::GUIvtrack(GUIvscrollbar *p)
-    : GUItrack(p, 0, 12, 12, p->height() - 24) {
+    : GUItrack(p, p->x1, p->y1 + 12, 12, p->height() - 24) {
   tracklen = height() - 8;
   thumb = new GUIvtrackbutton(this, 8);
 }
@@ -903,7 +903,7 @@ void GUIvtrack::positionthumb() {
 void GUIvtrack::setthumbsize(int posrange) { (void)posrange; }
 
 GUIhtrack::GUIhtrack(GUIhscrollbar *p)
-    : GUItrack(p, 12, 0, p->width() - 24, 12) {
+    : GUItrack(p, p->x1 + 12, p->y1, p->width() - 24, 12) {
   tracklen = width() - 8;
   thumb = new GUIhtrackbutton(this, 8);
 }
@@ -915,7 +915,7 @@ void GUIhtrack::setthumbsize(int posrange) { (void)posrange; }
 
 // ---- GUItrackbutton ----
 GUItrackbutton::GUItrackbutton(GUItrack *p, int size)
-    : GUIbutton(p, 0, 0, size, size) {
+    : GUIbutton(p, p->x1, p->y1, size, size) {
   ptrack = p;
   tpos = 0;
 }
