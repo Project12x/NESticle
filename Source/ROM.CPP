@@ -74,8 +74,11 @@ void loadrom(char *romfile) {
   // get rom name without extension
   strncpy(romfilename, romfile, sizeof(romfilename) - 1);
   romfilename[sizeof(romfilename) - 1] = 0;
-  if (strchr(romfilename, '.'))
-    *strchr(romfilename, '.') = 0;
+  // Strip extension: use strrchr to find LAST dot (handles "Super Mario Bros.
+  // (USA).nes")
+  char *lastdot = strrchr(romfilename, '.');
+  if (lastdot)
+    *lastdot = 0;
 
   char s[512];
   strncpy(s, romfilename, sizeof(s) - 5);
