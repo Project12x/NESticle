@@ -721,63 +721,55 @@ int main(int argc, char *argv[]) {
         lasttime += (1000 / TIMERSPEED);
       }
 
-      if (nv)
-        nv->refreshpalette();
-      memset(sdl_screen, 0x9E, SCREENX * SCREENY);
-      screen = video = (char *)sdl_screen;
-      if (framecount < 3) {
-        fprintf(stderr, "[LOG] Frame %d: updatescreen()\n", framecount);
-        fflush(stderr);
-      }
-      static bool popup_released = false;
-      if (popup_released || framecount < 3) {
-        fprintf(stderr, "[FRAME] pre-updatescreen frame=%d\n", framecount);
-        fflush(stderr);
-      }
-      updatescreen();
-      if (popup_released || framecount < 3) {
-        fprintf(stderr, "[FRAME] post-updatescreen frame=%d\n", framecount);
-        fflush(stderr);
-      }
+      // Only render if we actually ticked (avoid redundant rendering)
+      if (numtimer > 0) {
+        if (nv)
+          nv->refreshpalette();
+        memset(sdl_screen, 0x9E, SCREENX * SCREENY);
+        screen = video = (char *)sdl_screen;
+        updatescreen();
 
-      convert_screen_to_argb();
+        convert_screen_to_argb();
 
-      // Draw animated cursor overlay directly to ARGB framebuffer
-      // This replaces the static guivol.cursor with a 4-frame animation
-      // from the original NESticle cursor
-      if (!m.hidden) {
-        static int cursor_frame = 0;
-        static unsigned last_uu = 0;
-        if (uu - last_uu >= 12) {
-          cursor_frame = (cursor_frame + 1) % CURSOR_FRAME_COUNT;
-          last_uu = uu;
-        }
-        const unsigned int *frame = cursor_frames[cursor_frame];
-        for (int cy = 0; cy < CURSOR_FRAME_H; cy++) {
-          int sy = m.y + cy;
-          if (sy < 0 || sy >= SCREENY)
-            continue;
-          for (int cx = 0; cx < CURSOR_FRAME_W; cx++) {
-            int sx = m.x + cx;
-            if (sx < 0 || sx >= SCREENX)
+        // Draw animated cursor overlay directly to ARGB framebuffer
+        // This replaces the static guivol.cursor with a 4-frame animation
+        // from the original NESticle cursor
+        if (!m.hidden) {
+          static int cursor_frame = 0;
+          static unsigned last_uu = 0;
+          if (uu - last_uu >= 12) {
+            cursor_frame = (cursor_frame + 1) % CURSOR_FRAME_COUNT;
+            last_uu = uu;
+          }
+          const unsigned int *frame = cursor_frames[cursor_frame];
+          for (int cy = 0; cy < CURSOR_FRAME_H; cy++) {
+            int sy = m.y + cy;
+            if (sy < 0 || sy >= SCREENY)
               continue;
-            unsigned int pixel = frame[cy * CURSOR_FRAME_W + cx];
-            if (pixel & 0xFF000000) { // non-transparent
-              sdl_framebuffer[sy * SCREENX + sx] = pixel;
+            for (int cx = 0; cx < CURSOR_FRAME_W; cx++) {
+              int sx = m.x + cx;
+              if (sx < 0 || sx >= SCREENX)
+                continue;
+              unsigned int pixel = frame[cy * CURSOR_FRAME_W + cx];
+              if (pixel & 0xFF000000) { // non-transparent
+                sdl_framebuffer[sy * SCREENX + sx] = pixel;
+              }
             }
           }
         }
-      }
 
-      SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
-                        SCREENX * sizeof(Uint32));
-      SDL_RenderClear(sdl_renderer);
-      SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, nullptr);
-      SDL_RenderPresent(sdl_renderer);
-      framecount++;
-      g_framecount = framecount;
+        SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
+                          SCREENX * sizeof(Uint32));
+        SDL_RenderClear(sdl_renderer);
+        SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, nullptr);
+        SDL_RenderPresent(sdl_renderer);
+        framecount++;
+        g_framecount = framecount;
+      } else {
+        SDL_Delay(1); // Yield CPU when no timer ticks needed
+      }
     }
-  }
+  } // end while loop
 
   terminategame();
   if (sdl_audio_device > 0)
