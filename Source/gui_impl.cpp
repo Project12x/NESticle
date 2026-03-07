@@ -1302,8 +1302,8 @@ int GUIpopupmenu::release(mouse &m) {
     domenuitem(saved);
     return 1;
   }
-  // Click outside any item — close this popup
-  delete this;
+  // No item selected — release capture but don't self-delete
+  // (hmenu::release handles popup lifecycle)
   return 1;
 }
 void GUIpopupmenu::draw(char *dest) { GUIvmenu::draw(dest); }

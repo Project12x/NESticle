@@ -136,9 +136,8 @@ void cleardesktop();
 #include "nesvideo.h"
 
 void setres(int xw, int yw) {
-  // deactivate shit
-  if (nv) // nv->freenatablecaches();
-  {
+  // deactivate NES video surfaces if loaded
+  if (nv) {
     nv->realntc[0]->freesurface();
     nv->realntc[1]->freesurface();
   }
@@ -149,9 +148,8 @@ void setres(int xw, int yw) {
   if (nv && SCREENX <= 320)
     ((GUImaximizebox *)nv->parent)->maximize();
 
-  // reactivate shit
-  if (nv) // nv->createnatablecaches();
-  {
+  // reactivate NES video surfaces if loaded
+  if (nv) {
     nv->realntc[0]->createsurface();
     nv->realntc[1]->createsurface();
   }
