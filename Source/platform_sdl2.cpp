@@ -729,6 +729,20 @@ int main(int argc, char *argv[]) {
         fflush(stderr);
       }
 
+      // Cursor palette cycling (blood drip animation)
+      // Palette indices 1-7 contain graduated blood-red shades in gui.vol.
+      // Rotating them every few frames creates the animated drip effect.
+      {
+        static int cycle_counter = 0;
+        if (++cycle_counter >= 4) { // cycle every 4 frames
+          cycle_counter = 0;
+          SDL_Color saved = sdl_palette[1];
+          for (int ci = 1; ci < 7; ci++)
+            sdl_palette[ci] = sdl_palette[ci + 1];
+          sdl_palette[7] = saved;
+        }
+      }
+
       convert_screen_to_argb();
       SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
                         SCREENX * sizeof(Uint32));
