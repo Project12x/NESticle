@@ -5,6 +5,7 @@
 #include "guivol.h"
 #include "message.h"
 #include "r2img.h"
+#include "uutimer.h"
 
 mouse::mouse() {
   oldb = 0;
@@ -62,6 +63,24 @@ void mouse::updatebut(int newb) {
 }
 
 void mouse::draw(char *dest) {
-  if (!hidden)
+  if (!hidden && guivol.cursor) {
+    // Blood drip animation: cycle palette indices 34->38->42->34
+    // on the cursor's RLE pixel data every 20 ticks
+    static uutimer drip;
+    static bool drip_initialized = false;
+    if (!drip_initialized) {
+      drip.set(20);
+      drip_initialized = true;
+    }
+    if (drip.check()) {
+      // Rotate blood colors: 34->38->42->34
+      // Use a temp index (255) to avoid overwrite conflicts
+      guivol.cursor->convertcolor(42, 255); // 42 -> temp
+      guivol.cursor->convertcolor(38, 42);  // 38 -> 42
+      guivol.cursor->convertcolor(34, 38);  // 34 -> 38
+      guivol.cursor->convertcolor(255, 34); // temp -> 34
+      drip.set(20);
+    }
     guivol.cursor->draw(dest, x, y);
+  }
 }
