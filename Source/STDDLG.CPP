@@ -3,13 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 #include "types.h"
 
 #include "dd.h"
 #include "font.h"
 #include "r2img.h"
-
 
 #include "gui.h"
 #include "guicolor.h"
@@ -136,7 +134,6 @@ void cleardesktop();
 
 #include "nes.h"
 #include "nesvideo.h"
-
 
 void setres(int xw, int yw) {
   // deactivate shit
@@ -402,5 +399,12 @@ menu mainmenu = {{
 
 void initdefaultgui() {
   gmenu = new GUIhmenu(guiroot, &mainmenu, 0, 0);
+  fprintf(stderr, "[GUI] root=%p guiroot=%p gmenu=%p\n", (void *)root,
+          (void *)guiroot, (void *)gmenu);
+  fprintf(stderr, "[GUI] guiroot bounds: (%d,%d)-(%d,%d)\n", guiroot->x1,
+          guiroot->y1, guiroot->x2, guiroot->y2);
+  fprintf(stderr, "[GUI] gmenu bounds: (%d,%d)-(%d,%d)\n", gmenu->x1, gmenu->y1,
+          gmenu->x2, gmenu->y2);
+  fflush(stderr);
   enablegui();
 }

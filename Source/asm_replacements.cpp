@@ -111,44 +111,59 @@ void __cdecl draw_sprite_behind_asm(bitmap8x8 *b, char *dest, int x, int y,
 
 // -----------------------------------------------------------
 // drawimager2 - Draw an RLE-compressed image
+// Matches original algorithm from R2IMG.CPP exactly.
+// RLE format: each scanline is pairs of (skip, count, pixels...)
+// terminated when remaining width x <= 0.
 // -----------------------------------------------------------
 void __cdecl drawimager2(IMG *s, char *d, int x, int y, int o) {
   if (!s || !d)
     return;
-  int xw = s->xw;
-  int yw = s->yw;
+  (void)o; // orientation not implemented in original either
+
+  int imgxw = s->xw;
+  int imgyw = s->yw;
   int *yd = s->ydisp();
-  char *data = s->data();
-  int flipx = o & 2; // IMG_FLIPX
-  int flipy = o & 1; // IMG_FLIPY
 
-  for (int row = 0; row < yw; row++) {
-    int srcrow = flipy ? (yw - 1 - row) : row;
-    int dy = y + row;
-    if (dy < 0 || dy >= SCREENY)
-      continue;
+  // Clip: skip if entirely off-screen
+  if (x >= SCREENX || y >= SCREENY || x + imgxw <= 0 || y + imgyw <= 0)
+    return;
 
-    // Each scanline's RLE data starts at offset yd[srcrow]
-    char *rle = (char *)s + yd[srcrow];
-    int dx = flipx ? (x + xw - 1) : x;
-    int xdir = flipx ? -1 : 1;
+  d += x + y * PITCH;
 
-    while (1) {
-      unsigned char skip = (unsigned char)*rle++;
-      if (skip == 0xFF)
-        break; // end of scanline
-      dx += skip * xdir;
+  for (int row = 0; row < imgyw; row++) {
+    if (y + row >= 0 && y + row < SCREENY) {
+      unsigned char *src = ((unsigned char *)s) + yd[row];
+      char *dp = d;
 
-      unsigned char count = (unsigned char)*rle++;
-      for (int i = 0; i < count; i++) {
-        unsigned char pixel = (unsigned char)*rle++;
-        int px = dx;
-        if (px >= 0 && px < SCREENX) {
-          d[dy * PITCH + px] = (char)pixel;
+      for (int remaining = imgxw; remaining > 0;) {
+        // Read skip (transparent) count
+        unsigned int skip = *src++;
+        dp += skip;
+        remaining -= skip;
+        if (remaining <= 0)
+          break;
+
+        // Read opaque run count + pixel data
+        unsigned int count = *src++;
+        // Clip-aware copy
+        int destoff = (int)(dp - d) + x; // absolute x position
+        if (destoff >= 0 && destoff + (int)count <= SCREENX) {
+          // Fast path: entirely on-screen
+          memcpy(dp, src, count);
+        } else {
+          // Slow path: per-pixel clip
+          for (unsigned int i = 0; i < count; i++) {
+            int px = destoff + (int)i;
+            if (px >= 0 && px < SCREENX)
+              dp[i] = src[i];
+          }
         }
-        dx += xdir;
+        src += count;
+        dp += count;
+        remaining -= count;
       }
     }
+    d += PITCH;
   }
 }
 

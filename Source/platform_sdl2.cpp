@@ -9,6 +9,17 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <signal.h>
+#include <windows.h>
+
+static volatile int g_framecount = 0;
+static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
+  fprintf(stderr, "[CRASH] Exception 0x%08lX at addr %p, frame=%d\n",
+          ep->ExceptionRecord->ExceptionCode,
+          ep->ExceptionRecord->ExceptionAddress, g_framecount);
+  fflush(stderr);
+  return EXCEPTION_EXECUTE_HANDLER;
+}
 
 // NESticle headers
 #include "command.h"
@@ -46,7 +57,8 @@ mouse m;
 // Active state
 static int ActiveApp = 1;
 
-// SDL objects
+// Globals
+static int sdl_scale = 2; // DPI scale factor (auto-detected)
 static SDL_Window *sdl_window = nullptr;
 static SDL_Renderer *sdl_renderer = nullptr;
 static SDL_Texture *sdl_texture = nullptr;
@@ -552,9 +564,28 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  sdl_window = SDL_CreateWindow("NESticle", SDL_WINDOWPOS_CENTERED,
-                                SDL_WINDOWPOS_CENTERED, 640, 480,
-                                SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+  // Auto-detect DPI scale: use 3x for 4K+, 2x otherwise
+  float ddpi = 0;
+  if (SDL_GetDisplayDPI(0, &ddpi, nullptr, nullptr) == 0 && ddpi > 144.0f)
+    sdl_scale = 3;
+  else
+    sdl_scale = 2;
+  // Allow --scale N override
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--scale") == 0 && i + 1 < argc) {
+      int s = atoi(argv[i + 1]);
+      if (s >= 1 && s <= 5)
+        sdl_scale = s;
+      i++;
+    }
+  }
+  fprintf(stderr, "[DPI] scale=%dx (DPI=%.0f)\n", sdl_scale, ddpi);
+  fflush(stderr);
+
+  sdl_window =
+      SDL_CreateWindow("NESticle", SDL_WINDOWPOS_CENTERED,
+                       SDL_WINDOWPOS_CENTERED, 640 * sdl_scale, 480 * sdl_scale,
+                       SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
   if (!sdl_window) {
     fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
     SDL_Quit();
@@ -565,6 +596,8 @@ int main(int argc, char *argv[]) {
       sdl_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
   if (!sdl_renderer)
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
+  // Use nearest-neighbor for crisp pixel art scaling
+  SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
 
   // Allocate 8-bit indexed screen buffer
   PITCH = SCREENX;
@@ -626,69 +659,85 @@ int main(int argc, char *argv[]) {
   Uint32 lasttime = SDL_GetTicks();
   int done = 0;
   int framecount = 0;
+  SetUnhandledExceptionFilter(crash_handler);
   while (!done && ActiveApp) {
-    m.reset();
-    SDL_Event ev;
-    while (SDL_PollEvent(&ev)) {
-      switch (ev.type) {
-      case SDL_QUIT:
-        done = 1;
-        break;
-      case SDL_KEYDOWN: {
-        char sc = sdl_to_nesticle_scancode(ev.key.keysym.scancode);
-        if (sc)
-          wm_keydown(sc);
-        break;
+    {
+      m.reset();
+      SDL_Event ev;
+      while (SDL_PollEvent(&ev)) {
+        switch (ev.type) {
+        case SDL_QUIT:
+          done = 1;
+          break;
+        case SDL_KEYDOWN: {
+          char sc = sdl_to_nesticle_scancode(ev.key.keysym.scancode);
+          if (sc)
+            wm_keydown(sc);
+          break;
+        }
+        case SDL_KEYUP: {
+          char sc = sdl_to_nesticle_scancode(ev.key.keysym.scancode);
+          if (sc)
+            wm_keyup(sc);
+          break;
+        }
+        case SDL_MOUSEMOTION: {
+          int ww, wh;
+          SDL_GetWindowSize(sdl_window, &ww, &wh);
+          m.updatexy(ev.motion.x * SCREENX / ww, ev.motion.y * SCREENY / wh);
+          break;
+        }
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP: {
+          int mb = 0;
+          Uint32 state = SDL_GetMouseState(nullptr, nullptr);
+          if (state & SDL_BUTTON(1))
+            mb |= 1;
+          if (state & SDL_BUTTON(3))
+            mb |= 2;
+          m.updatebut(mb);
+          break;
+        }
+        }
       }
-      case SDL_KEYUP: {
-        char sc = sdl_to_nesticle_scancode(ev.key.keysym.scancode);
-        if (sc)
-          wm_keyup(sc);
-        break;
-      }
-      case SDL_MOUSEMOTION:
-        m.updatexy(ev.motion.x * SCREENX / 640, ev.motion.y * SCREENY / 480);
-        break;
-      case SDL_MOUSEBUTTONDOWN:
-      case SDL_MOUSEBUTTONUP: {
-        int mb = 0;
-        Uint32 state = SDL_GetMouseState(nullptr, nullptr);
-        if (state & SDL_BUTTON(1))
-          mb |= 1;
-        if (state & SDL_BUTTON(3))
-          mb |= 2;
-        m.updatebut(mb);
-        break;
-      }
-      }
-    }
 
-    // Timer
-    Uint32 now = SDL_GetTicks();
-    int numtimer = 0;
-    while (now >= lasttime + (Uint32)(1000 / TIMERSPEED)) {
-      if (++numtimer < 5)
-        gametimer();
-      lasttime += (1000 / TIMERSPEED);
-    }
+      // Timer
+      Uint32 now = SDL_GetTicks();
+      int numtimer = 0;
+      while (now >= lasttime + (Uint32)(1000 / TIMERSPEED)) {
+        if (++numtimer < 5)
+          gametimer();
+        lasttime += (1000 / TIMERSPEED);
+      }
 
-    if (nv)
-      nv->refreshpalette();
-    memset(sdl_screen, 0x9E, SCREENX * SCREENY);
-    screen = video = (char *)sdl_screen;
-    if (framecount < 3) {
-      fprintf(stderr, "[LOG] Frame %d: updatescreen()\n", framecount);
-      fflush(stderr);
-    }
-    updatescreen();
+      if (nv)
+        nv->refreshpalette();
+      memset(sdl_screen, 0x9E, SCREENX * SCREENY);
+      screen = video = (char *)sdl_screen;
+      if (framecount < 3) {
+        fprintf(stderr, "[LOG] Frame %d: updatescreen()\n", framecount);
+        fflush(stderr);
+      }
+      static bool popup_released = false;
+      if (popup_released || framecount < 3) {
+        fprintf(stderr, "[FRAME] pre-updatescreen frame=%d\n", framecount);
+        fflush(stderr);
+      }
+      updatescreen();
+      if (popup_released || framecount < 3) {
+        fprintf(stderr, "[FRAME] post-updatescreen frame=%d\n", framecount);
+        fflush(stderr);
+      }
 
-    convert_screen_to_argb();
-    SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
-                      SCREENX * sizeof(Uint32));
-    SDL_RenderClear(sdl_renderer);
-    SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, nullptr);
-    SDL_RenderPresent(sdl_renderer);
-    framecount++;
+      convert_screen_to_argb();
+      SDL_UpdateTexture(sdl_texture, nullptr, sdl_framebuffer,
+                        SCREENX * sizeof(Uint32));
+      SDL_RenderClear(sdl_renderer);
+      SDL_RenderCopy(sdl_renderer, sdl_texture, nullptr, nullptr);
+      SDL_RenderPresent(sdl_renderer);
+      framecount++;
+      g_framecount = framecount;
+    }
   }
 
   terminategame();

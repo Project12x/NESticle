@@ -85,6 +85,9 @@ void GUIrect::unlink() {
 GUIrect::~GUIrect() {
   while (child)
     delete child;
+  // Clear parent's lastfocus if it points to us to prevent dangling pointer
+  if (parent && parent->lastfocus == this)
+    parent->lastfocus = 0;
   unlink();
 }
 
@@ -241,7 +244,10 @@ int GUIcontents::keyhit(char scan, char key) {
 // ROOT is implemented in MAIN.CPP
 
 // ---- GUIroot (constructor/destructor) ----
-GUIroot::GUIroot(ROOT *p) : GUIrect(p, 0, 0, SCREENX, SCREENY) {}
+extern GUIroot *guiroot;
+GUIroot::GUIroot(ROOT *p) : GUIrect(p, 0, 0, SCREENX, SCREENY) {
+  guiroot = this;
+}
 GUIroot::~GUIroot() {}
 int GUIroot::keyhit(char scan, char key) { return GUIrect::keyhit(scan, key); }
 
@@ -1168,6 +1174,7 @@ void GUIvmenu::draw(char *dest) {
     tmenu->m[i].draw(x1, dy, width(), &tmenu->m[i] == selmi);
     dy += tmenu->m[i].height();
   }
+  GUIrect::draw(dest);
 }
 menuitem *GUIvmenu::menuhittest(int x, int y, int &sx, int &sy) {
   if (x < x1 || x >= x2 || y < y1 || y >= y2)
@@ -1195,6 +1202,7 @@ void GUIhmenu::draw(char *dest) {
     tmenu->m[i].draw(dx, y1, tmenu->m[i].width(), &tmenu->m[i] == selmi);
     dx += tmenu->m[i].width();
   }
+  GUIrect::draw(dest);
 }
 menuitem *GUIhmenu::menuhittest(int x, int y, int &sx, int &sy) {
   if (y < y1 || y >= y2)
@@ -1213,24 +1221,89 @@ menuitem *GUIhmenu::menuhittest(int x, int y, int &sx, int &sy) {
 }
 int GUIhmenu::keyhit(char scan, char key) { return tmenu->keyhit(scan, key); }
 
+GUIpopupmenu *current_hmenu_popup = 0;
+
+GUIrect *GUIhmenu::click(mouse &m) {
+  int sx, sy;
+  menuitem *mi = menuhittest(m.x, m.y, sx, sy);
+  if (mi)
+    selmi = mi;
+
+  // If the item has a submenu, open it as a popup
+  if (selmi && selmi->submenu) {
+    // Delete any existing popup first
+    if (current_hmenu_popup) {
+      delete current_hmenu_popup;
+      current_hmenu_popup = 0;
+    }
+    int sx2, sy2;
+    menuhittest(m.x, m.y, sx2, sy2);
+    // Parent to guiroot so popup is hittable (hmenu bounds are too small)
+    extern GUIroot *guiroot;
+    current_hmenu_popup = new GUIpopupmenu(guiroot, selmi->submenu, sx2, y2);
+    selmi = 0;
+    return current_hmenu_popup; // Transfer capture to popup
+  }
+  return this;
+}
+
+int GUIhmenu::release(mouse &m) {
+  // Close any open popup when releasing on the menu bar
+  if (current_hmenu_popup) {
+    delete current_hmenu_popup;
+    current_hmenu_popup = 0;
+  }
+  if (selmi && selmi->func) {
+    selmi->menufunc();
+  }
+  selmi = 0;
+  return 1;
+}
+
 // ---- GUIpopupmenu ----
 GUIpopupmenu::GUIpopupmenu(GUIrect *treport, menu *m, int x, int y)
     : GUIvmenu((GUImenu *)treport, m, x, y) {
   report = treport;
 }
-GUIpopupmenu::~GUIpopupmenu() {}
+GUIpopupmenu::~GUIpopupmenu() {
+  extern GUIpopupmenu *current_hmenu_popup;
+  if (current_hmenu_popup == this)
+    current_hmenu_popup = 0;
+}
 int GUIpopupmenu::domenuitem(menuitem *t) {
-  if (t->submenu)
-    return 0;
+  if (t->submenu) {
+    // Open cascading submenu — parent to this popup for auto-cleanup
+    // Position at right edge of this popup, at mouse Y
+    GUIpopupmenu *sub = new GUIpopupmenu(this, t->submenu, x2, y1);
+    fprintf(stderr, "[POPUP] opened cascading submenu at (%d,%d) for '%s'\n",
+            x2, y1, t->text ? t->text : "(null)");
+    fflush(stderr);
+    return 0; // don't delete this popup
+  }
   int r = GUImenu::domenuitem(t);
   delete this;
   return r;
 }
 int GUIpopupmenu::release(mouse &m) {
   if (selmi) {
-    domenuitem(selmi);
+    menuitem *saved = selmi;
+    selmi = 0;
+    if (saved->submenu) {
+      // Delete any existing cascade child first
+      while (child)
+        delete child;
+      // Open cascading submenu as child
+      GUIpopupmenu *sub = new GUIpopupmenu(this, saved->submenu, x2, m.y);
+      fprintf(stderr, "[POPUP] release: opened cascade for '%s' at (%d,%d)\n",
+              saved->text ? saved->text : "(null)", x2, m.y);
+      fflush(stderr);
+      return 0; // release capture so user can click on cascade
+    }
+    domenuitem(saved);
     return 1;
   }
+  // Click outside any item — close this popup
+  delete this;
   return 1;
 }
 void GUIpopupmenu::draw(char *dest) { GUIvmenu::draw(dest); }
