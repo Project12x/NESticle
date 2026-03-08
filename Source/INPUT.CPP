@@ -285,20 +285,16 @@ unsigned char gravis::gravtable[] = {
 
 class sdlgamepad : public input {
   SDL_GameController *controller;
-  int deviceIndex;
+  int joystickIndex; // SDL joystick index (from SDL_NumJoysticks)
 
 public:
-  sdlgamepad(int type, int idx) : input(type), deviceIndex(idx), controller(0) {
-    int count = 0;
-    for (int i = 0; i < SDL_NumJoysticks(); i++) {
-      if (SDL_IsGameController(i)) {
-        if (count == idx) {
-          controller = SDL_GameControllerOpen(i);
-          break;
-        }
-        count++;
-      }
-    }
+  sdlgamepad(int type, int sdlJoyIdx)
+      : input(type), joystickIndex(sdlJoyIdx), controller(0) {
+    if (SDL_IsGameController(sdlJoyIdx))
+      controller = SDL_GameControllerOpen(sdlJoyIdx);
+    fprintf(stderr, "[INPUT] sdlgamepad created: joyIdx=%d controller=%p\n",
+            sdlJoyIdx, (void *)controller);
+    fflush(stderr);
   }
 
   virtual ~sdlgamepad() {
@@ -355,15 +351,10 @@ public:
 
   virtual void main() {
     if (!controller) {
-      int count = 0;
-      for (int i = 0; i < SDL_NumJoysticks(); i++) {
-        if (SDL_IsGameController(i)) {
-          if (count == deviceIndex) {
-            controller = SDL_GameControllerOpen(i);
-            break;
-          }
-          count++;
-        }
+      // Attempt reconnect using stored joystick index
+      if (joystickIndex < SDL_NumJoysticks() &&
+          SDL_IsGameController(joystickIndex)) {
+        controller = SDL_GameControllerOpen(joystickIndex);
       }
     }
   }
@@ -470,4 +461,15 @@ newinputdevice(int idtype) { // if no inputdevicesettings, can't initialize
 #endif
   }
   return 0;
+}
+
+// Overload: create gamepad with specific SDL joystick index
+input *newinputdevice(int idtype, int sdlJoyIndex) {
+  if (!ids)
+    return 0;
+#ifdef SDL2
+  if (idtype == ID_GAMEPAD1 || idtype == ID_GAMEPAD2)
+    return new sdlgamepad(idtype, sdlJoyIndex);
+#endif
+  return newinputdevice(idtype);
 }

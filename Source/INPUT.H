@@ -89,6 +89,7 @@ public:
   static void refreshtimer();
 };
 input *newinputdevice(int idtype);
+input *newinputdevice(int idtype, int sdlJoyIndex);
 
 //---------------------------
 //     input device settings

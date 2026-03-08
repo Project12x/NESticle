@@ -19,8 +19,56 @@
 // input device settings.
 extern inputdevicesettings *ids;
 
-#define NUMINPUTTYPES 10
-char *inputnames[] = {
+#ifdef SDL2
+#include <SDL.h>
+#endif
+
+// Dynamic device list entry: maps list index to device type + controller index
+struct deviceentry {
+  int type;      // ID_NONE, ID_KEY1, ID_KEY2, ID_GAMEPAD1, etc.
+  int sdlIndex;  // SDL joystick index (for gamepads)
+  char name[64]; // Display name
+};
+
+#define MAX_DEVICES 16
+static deviceentry devices[MAX_DEVICES];
+static int numdevices = 0;
+
+static void enumerateDevices() {
+  numdevices = 0;
+  // Fixed entries
+  devices[numdevices] = {ID_NONE, -1, "None"};
+  numdevices++;
+  devices[numdevices] = {ID_KEY1, -1, "Keyboard 1"};
+  numdevices++;
+  devices[numdevices] = {ID_KEY2, -1, "Keyboard 2"};
+  numdevices++;
+
+#ifdef SDL2
+  // Enumerate connected SDL GameControllers
+  for (int i = 0; i < SDL_NumJoysticks() && numdevices < MAX_DEVICES; i++) {
+    if (SDL_IsGameController(i)) {
+      const char *cname = SDL_GameControllerNameForIndex(i);
+      devices[numdevices].type = ID_GAMEPAD1;
+      devices[numdevices].sdlIndex = i;
+      if (cname)
+        snprintf(devices[numdevices].name, 64, "%s", cname);
+      else
+        snprintf(devices[numdevices].name, 64, "Controller %d", i);
+      numdevices++;
+    }
+  }
+#endif
+
+  fprintf(stderr, "[INPUT] enumerateDevices: found %d devices\\n", numdevices);
+  for (int i = 0; i < numdevices; i++)
+    fprintf(stderr, "[INPUT]   [%d] type=%d sdl=%d name='%s'\\n", i,
+            devices[i].type, devices[i].sdlIndex, devices[i].name);
+  fflush(stderr);
+}
+
+// Legacy names kept for compatibility but not used in device list
+static char *inputnames[] = {
     "None",          "Gravis Gamepad", "Keyboard 1",  "Keyboard 2",
     "Joystick 1",    "Joystick 2",     "GrIP Slot 1", "GrIP Slot 2",
     "SDL Gamepad 1", "SDL Gamepad 2",
@@ -199,36 +247,53 @@ public:
       : GUIcontents(220, 135), in(tin), inputnum(num) {
     fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num, (void *)in);
     fflush(stderr);
+
+    // Enumerate available devices
+    enumerateDevices();
+
     new GUIstatictext(this, 1, "Input type:", 5, 3);
-    list = new GUIstringlistbox(this, 5, 15, 110, NUMINPUTTYPES, 10);
+    int visibleItems = numdevices < 10 ? numdevices : 10;
+    list = new GUIstringlistbox(this, 5, 15, 110, visibleItems, 10);
     edit = save = 0;
-    // fill list box
-    ITEMPTR *a = list->resizeitems(NUMINPUTTYPES);
-    for (int i = 0; i < NUMINPUTTYPES; i++)
-      a[i] = (ITEMPTR)inputnames[i];
+
+    // Fill list box from dynamic device list
+    ITEMPTR *a = list->resizeitems(numdevices);
+    for (int i = 0; i < numdevices; i++)
+      a[i] = (ITEMPTR)devices[i].name;
 
     new GUIstatictext(this, 1, "Test area:", 125, 3);
     test = new inputtestarea(this, 125, 15, 91, in);
-    for (i = 0; i < 4; i++)
-      b[i] = new inputtestbutton(this, 127 + i * 23, 110, 18, 10, in, i);
+    for (int j = 0; j < 4; j++)
+      b[j] = new inputtestbutton(this, 127 + j * 23, 110, 18, 10, in, j);
     lasto = 0;
-    //  msg.printf(2,"in=%p in->o=%p",in,in ? in->o : 0);
     if (in) {
       lasto = in->o;
-      list->setsel(in->type);
+      // Find current device in list by matching type
+      for (int k = 0; k < numdevices; k++) {
+        if (devices[k].type == in->type) {
+          list->setsel(k);
+          break;
+        }
+      }
       lastintype = in->type;
-      //    in->bind(0);
     }
-    //  msg.printf(2,"in=%p in->o=%p lasto=%p",in,in ? in->o : 0,lasto);
   }
 
-  void changedevice(int type) {
-    fprintf(stderr, "[INPUT] changedevice(%d) old_in=%p\n", type, (void *)in);
+  void changedevice(int listIdx) {
+    if (listIdx < 0 || listIdx >= numdevices)
+      return;
+    deviceentry &dev = devices[listIdx];
+    fprintf(stderr,
+            "[INPUT] changedevice: listIdx=%d type=%d sdl=%d name='%s'\n",
+            listIdx, dev.type, dev.sdlIndex, dev.name);
     fflush(stderr);
     disable();
     if (in)
       delete in;
-    in = newinputdevice(type);
+    if (dev.sdlIndex >= 0)
+      in = newinputdevice(dev.type, dev.sdlIndex);
+    else
+      in = newinputdevice(dev.type);
     fprintf(stderr, "[INPUT] newinputdevice returned %p\n", (void *)in);
     fflush(stderr);
     if (in)
