@@ -190,6 +190,18 @@ int keyboard() {
     togglegui();
     return 1;
   }
+  // When the GUI has a modal widget active (e.g., keyedit learning mode),
+  // deliver keys to the GUI first, bypassing game input processing.
+  // Without this, keyboard input devices consume all scancodes before
+  // the GUI can capture them for key remapping.
+  if (GUIrect::modal) {
+    if (!(kbscan & 0x80)) { // only process key presses
+      char key = scan2ascii(kbscan);
+      if (root)
+        root->keyhit(kbscan, key);
+    }
+    return 1;
+  }
 
   if (input::refreshkeyboard(kbscan))
     return 1; // dont add key to queue
@@ -198,7 +210,6 @@ int keyboard() {
     return 1; // release
 
   char key = scan2ascii(kbscan);
-  // if (root && root->keyhit(kbscan,key)) enablegui();
   if (root && root->keyhit(kbscan, key))
     return 1;
 
