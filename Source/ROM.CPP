@@ -138,6 +138,20 @@ void loadrom(char *romfile) {
   // msg.printf(2,"%s loaded",romfile);
   romloaded = 1;
 
+  fprintf(stderr, "[ROM] Loaded: '%s'\n", s);
+  fprintf(stderr, "[ROM] PRG banks: %d (%dK), CHR banks: %d (%dK)\n", numrom,
+          numrom * 16, numvrom, numvrom * 8);
+  fprintf(stderr, "[ROM] Mapper: %d, Mirroring: %d, Battery: %d, Trainer: %d\n",
+          (int)romhdr.banktype, (int)romhdr.mirroring, (int)romhdr.battery,
+          (int)romhdr.trainer);
+  fprintf(stderr,
+          "[ROM] Header bytes: %02X %02X %02X %02X %02X %02X %02X %02X\n",
+          ((unsigned char *)&romhdr)[0], ((unsigned char *)&romhdr)[1],
+          ((unsigned char *)&romhdr)[2], ((unsigned char *)&romhdr)[3],
+          ((unsigned char *)&romhdr)[4], ((unsigned char *)&romhdr)[5],
+          ((unsigned char *)&romhdr)[6], ((unsigned char *)&romhdr)[7]);
+  fflush(stderr);
+
   if (romhdr.battery) {
     batterymem = new BATTERYMEM;
     batterymem->read(romfilename); // read battery backed rom
