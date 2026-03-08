@@ -73,6 +73,8 @@ target_include_directories(NESticle PRIVATE
     ${SDL2_INCLUDE_DIR}
 )
 
+target_compile_definitions(NESticle PRIVATE SDL2)
+
 target_link_libraries(NESticle PRIVATE
     ${SDL2_LIB_DIR}/SDL2.lib
     ${SDL2_LIB_DIR}/SDL2main.lib
