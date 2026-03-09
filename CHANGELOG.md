@@ -8,6 +8,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Planned
 - GUI Modernization (Resizable frames, button clipping fixes)
 
+## [0.4.1] - 2026-03-09
+
+### Fixed
+- **GUIVOL struct alignment**: Added missing `sfont` and 12 other fields to match original gui.vol entry order; all icons (scrollbar arrows, close/maximize buttons, checkmarks) now display correctly
+- **GUI constructor coordinates**: Fixed 5 widget constructors using relative coordinates where absolute were required (close button, accept bar, scrollbar, number edit arrows)
+- **Button bar overlap**: GUIonebuttonbox/GUItwobuttonbox now extend box height by 18px for the bottom button bar
+- **Popup menu crash**: Fixed use-after-free in GUIpopupmenu::domenuitem() — mouse capture pointer cleared before popup self-deletion
+
 ## [0.4.0] - 2026-03-09
 
 ### Added

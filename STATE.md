@@ -5,7 +5,7 @@
 
 ## Build Status
 - **Compiles**: Yes
-- **Runs**: Yes (v0.4.0 tagged, true fullscreen working)
+- **Runs**: Yes (v0.4.1 — GUI icons correct, widget positioning fixed)
 
 ## Key Metrics
 - Original source files analyzed: ~25 C++, 4 ASM, ~20 headers

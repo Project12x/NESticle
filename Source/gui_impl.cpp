@@ -499,8 +499,8 @@ int GUInumbertextedit::getstate() { return atoi(input); }
 // ---- GUInumberedit ----
 GUInumberedit::GUInumberedit(GUIrect *p, char *pmpt, int x, int y, int xw)
     : GUIedit(p, pmpt, x, y, xw) {
-  up = new GUIimagebutton(this, guivol.umark, xw - 10, 0);
-  down = new GUIimagebutton(this, guivol.dmark, xw - 10, 6);
+  up = new GUIimagebutton(this, guivol.umark, x1 + xw - 10, y1);
+  down = new GUIimagebutton(this, guivol.dmark, x1 + xw - 10, y1 + 6);
 }
 int GUInumberedit::keyhit(char scan, char key) {
   return GUIedit::keyhit(scan, key);
@@ -612,7 +612,7 @@ GUIbox::GUIbox(GUIrect *p, char *titlestr, GUIcontents *c, int x, int y)
   resizing = 0;
   c->reparent(this);
   c->moverel(2, 14);
-  close = new GUIimagebutton(this, guivol.xmark, width() - 12, 2);
+  close = new GUIimagebutton(this, guivol.xmark, x1 + width() - 12, y1 + 2);
   GUI_LOG("GUIbox '%s' content at (%d,%d)-(%d,%d) close at (%d,%d)", title,
           c->x1, c->y1, c->x2, c->y2, close->x1, close->y1);
 }
@@ -761,8 +761,11 @@ int GUImaximizebox::sendmessage(GUIrect *c, int msg) {
 GUIonebuttonbox::GUIonebuttonbox(GUIrect *p, char *str, GUIcontents *c,
                                  char *b1name, int x, int y)
     : GUIbox(p, str, c, x, y) {
-  bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
-  b1 = new GUItextbutton(bar, b1name, (width() - 50) / 2, 2);
+  // Extend box height to accommodate the button bar
+  y2 += 18;
+  bar = new GUIbar(this, (char)CLR_BOX, x1, y1 + height() - 18, width(), 18);
+  b1 =
+      new GUItextbutton(bar, b1name, bar->x1 + (width() - 50) / 2, bar->y1 + 2);
 }
 int GUIonebuttonbox::sendmessage(GUIrect *c, int msg) {
   if (c == (GUIrect *)b1 && msg == GUIMSG_PUSHED) {
@@ -787,9 +790,12 @@ int GUIonebuttonbox::keyhit(char scan, char key) {
 GUItwobuttonbox::GUItwobuttonbox(GUIrect *p, char *str, GUIcontents *c,
                                  char *b1name, char *b2name, int x, int y)
     : GUIbox(p, str, c, x, y) {
-  bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
-  b1 = new GUItextbutton(bar, b1name, width() / 4 - 25, 2);
-  b2 = new GUItextbutton(bar, b2name, 3 * width() / 4 - 25, 2);
+  // Extend box height to accommodate the button bar
+  y2 += 18;
+  bar = new GUIbar(this, (char)CLR_BOX, x1, y1 + height() - 18, width(), 18);
+  b1 = new GUItextbutton(bar, b1name, bar->x1 + width() / 4 - 25, bar->y1 + 2);
+  b2 = new GUItextbutton(bar, b2name, bar->x1 + 3 * width() / 4 - 25,
+                         bar->y1 + 2);
 }
 int GUItwobuttonbox::sendmessage(GUIrect *c, int msg) {
   if (msg == GUIMSG_PUSHED) {
@@ -1044,7 +1050,7 @@ GUIlistbox::GUIlistbox(GUIrect *p, int x, int y, int xw, int iy, int iheight)
   itemheight = iheight;
   itemv = iy;
   depressed = 0;
-  scroll = new GUIvscrollbar(this, xw - 12, 0, iy * iheight + 2);
+  scroll = new GUIvscrollbar(this, x1 + xw - 12, y1, iy * iheight + 2);
   GUI_LOG("GUIlistbox at (%d,%d)-(%d,%d) scroll at (%d,%d)-(%d,%d)", x1, y1, x2,
           y2, scroll->x1, scroll->y1, scroll->x2, scroll->y2);
 }
@@ -1332,6 +1338,8 @@ GUIrect *GUIhmenu::click(mouse &m) {
   if (selmi && selmi->submenu) {
     // Delete any existing popup first
     if (current_hmenu_popup) {
+      if (m.capture == current_hmenu_popup)
+        m.capture = 0;
       delete current_hmenu_popup;
       current_hmenu_popup = 0;
     }
@@ -1349,6 +1357,8 @@ GUIrect *GUIhmenu::click(mouse &m) {
 int GUIhmenu::release(mouse &m) {
   // Close any open popup when releasing on the menu bar
   if (current_hmenu_popup) {
+    if (m.capture == current_hmenu_popup)
+      m.capture = 0;
     delete current_hmenu_popup;
     current_hmenu_popup = 0;
   }
@@ -1376,9 +1386,13 @@ int GUIpopupmenu::domenuitem(menuitem *t) {
     // Open submenu as a new standalone popup, replacing this one
     extern GUIroot *guiroot;
     extern GUIpopupmenu *current_hmenu_popup;
+    extern mouse m;
     int popup_x = x2;
     int popup_y = y1;
     menu *sub = t->submenu;
+    // Clear capture before self-delete to prevent dangling pointer
+    if (m.capture == this)
+      m.capture = 0;
     // Delete ourselves first (sets current_hmenu_popup to 0 via destructor)
     delete this;
     // Create new popup as the current one
@@ -1386,6 +1400,10 @@ int GUIpopupmenu::domenuitem(menuitem *t) {
     return 0;
   }
   int r = GUImenu::domenuitem(t);
+  // Clear capture before self-delete to prevent dangling pointer
+  extern mouse m;
+  if (m.capture == this)
+    m.capture = 0;
   delete this;
   return r;
 }
