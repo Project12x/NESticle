@@ -1,4 +1,5 @@
 // functions for NES display
+#include <cstdio>
 #include <stdlib.h>
 #include <string.h>
 
@@ -7,9 +8,9 @@
 
 #include "message.h"
 
-#include "nesvideo.h"
-#include "nes.h"
 #include "mmc.h"
+#include "nes.h"
+#include "nesvideo.h"
 #include "slist.h"
 
 #include "gui.h"
@@ -448,7 +449,8 @@ inline void NES_sprite::draw_8x16(char *dest, patterntable *ptn) {
     patterntable &pt = ptn[p & 1]; ////nv->sc.biggestsc->ptn[p&1]; //get pattern
                                    /// from last screen context
 
-    pt[pnum].draw_sprite(dest, x, y + 1 - STARTFRAME, fx | (fy << 1), behindbg, attrib & 3);
+    pt[pnum].draw_sprite(dest, x, y + 1 - STARTFRAME, fx | (fy << 1), behindbg,
+                         attrib & 3);
     pt[pnum ^ 1].draw_sprite(dest, x, y + 1 + 8 - STARTFRAME, fx | (fy << 1),
                              behindbg, attrib & 3);
   }

@@ -12,11 +12,30 @@
 #include <signal.h>
 #include <windows.h>
 
+#include <dbghelp.h>
+#pragma comment(lib, "dbghelp.lib")
+
 static volatile int g_framecount = 0;
 static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
   fprintf(stderr, "[CRASH] Exception 0x%08lX at addr %p, frame=%d\n",
           ep->ExceptionRecord->ExceptionCode,
           ep->ExceptionRecord->ExceptionAddress, g_framecount);
+
+  void *stack[100];
+  unsigned short frames = CaptureStackBackTrace(0, 100, stack, NULL);
+  HANDLE process = GetCurrentProcess();
+  SymInitialize(process, NULL, TRUE);
+
+  char symbol_buffer[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
+  SYMBOL_INFO *symbol = (SYMBOL_INFO *)symbol_buffer;
+  symbol->MaxNameLen = 255;
+  symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+
+  for (int i = 0; i < frames; i++) {
+    SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
+    fprintf(stderr, "%i: %s\n", i, symbol->Name);
+  }
+
   fflush(stderr);
   return EXCEPTION_EXECUTE_HANDLER;
 }
@@ -151,6 +170,23 @@ void *loadresource(char *name) {
   return nullptr;
 }
 void settimerspeed(int x) { TIMERSPEED = x; }
+
+void toggle_sdl_fullscreen() {
+  if (!sdl_window)
+    return;
+  Uint32 flags = SDL_GetWindowFlags(sdl_window);
+  if (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) {
+    // Leaving fullscreen: restore 640x480 desktop buffer
+    SDL_SetWindowFullscreen(sdl_window, 0);
+    changeresolution(640, 480);
+    SDL_RenderSetLogicalSize(sdl_renderer, 640, 480);
+  } else {
+    // Entering fullscreen: switch to NES native 256x224
+    changeresolution(256, 224);
+    SDL_RenderSetLogicalSize(sdl_renderer, 256, 224);
+    SDL_SetWindowFullscreen(sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+  }
+}
 
 // ---- Surface class (offscreen rendering) ----
 struct SurfaceData {
@@ -614,6 +650,8 @@ int main(int argc, char *argv[]) {
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
   // Use nearest-neighbor for crisp pixel art scaling
   SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+  // Let SDL handle scaling/letterboxing to any window/fullscreen size
+  SDL_RenderSetLogicalSize(sdl_renderer, SCREENX, SCREENY);
 
   // Allocate 8-bit indexed screen buffer
   PITCH = SCREENX;
@@ -686,6 +724,12 @@ int main(int argc, char *argv[]) {
           done = 1;
           break;
         case SDL_KEYDOWN: {
+          if (ev.key.keysym.sym == SDLK_RETURN &&
+              (ev.key.keysym.mod & KMOD_ALT)) {
+            extern void toggle_emulator_fullscreen();
+            toggle_emulator_fullscreen();
+            break;
+          }
           char sc = sdl_to_nesticle_scancode(ev.key.keysym.scancode);
           if (sc)
             wm_keydown(sc);
@@ -698,9 +742,8 @@ int main(int argc, char *argv[]) {
           break;
         }
         case SDL_MOUSEMOTION: {
-          int ww, wh;
-          SDL_GetWindowSize(sdl_window, &ww, &wh);
-          m.updatexy(ev.motion.x * SCREENX / ww, ev.motion.y * SCREENY / wh);
+          // SDL_RenderSetLogicalSize maps coordinates to logical space
+          m.updatexy(ev.motion.x, ev.motion.y);
           break;
         }
         case SDL_MOUSEBUTTONDOWN:

@@ -609,6 +609,7 @@ GUIbox::GUIbox(GUIrect *p, char *titlestr, GUIcontents *c, int x, int y)
   strncpy(title, titlestr, 79);
   title[79] = 0;
   contents = c;
+  resizing = 0;
   c->reparent(this);
   c->moverel(2, 14);
   close = new GUIimagebutton(this, guivol.xmark, width() - 12, 2);
@@ -628,11 +629,39 @@ GUIrect *GUIbox::click(mouse &m) {
   GUIrect *h = GUIrect::hittest(m.x, m.y);
   if (h && h != this)
     return h->click(m);
+
+  // Hit-test the bottom right corner for resizing (12x12 active area)
+  if (m.x >= x2 - 12 && m.y >= y2 - 12) {
+    resizing = 1;
+    return this;
+  }
+
   return this;
 }
-int GUIbox::release(mouse &m) { return 1; }
+int GUIbox::release(mouse &m) {
+  resizing = 0;
+  return 1;
+}
 int GUIbox::drag(mouse &m) {
-  moverel(m.x - m.oldx, m.y - m.oldy);
+  if (resizing) {
+    int dx = m.x - m.oldx;
+    int dy = m.y - m.oldy;
+    int new_w = width() + dx;
+    int new_h = height() + dy;
+
+    // Minimum bounds check
+    if (new_w < 64)
+      new_w = 64;
+    if (new_h < 64)
+      new_h = 64;
+
+    resize(new_w, new_h);
+    if (contents) {
+      contents->resize(new_w - 4, new_h - 16);
+    }
+  } else {
+    moverel(m.x - m.oldx, m.y - m.oldy);
+  }
   return 1;
 }
 
@@ -672,7 +701,7 @@ GUImaximizebox::GUImaximizebox(GUIrect *p, char *titlestr, GUIcontents *c,
                                int x, int y)
     : GUIbox(p, titlestr, c, x, y) {
   maximized = 0;
-  max = new GUIimagebutton(this, 0, width() - 24, 2);
+  max = new GUIimagebutton(this, 0, width() - 28, 2);
   reposmaxbutton();
 }
 void GUImaximizebox::maximize() {
@@ -699,9 +728,21 @@ void GUImaximizebox::restore() {
 }
 void GUImaximizebox::reposmaxbutton() {
   if (max)
-    max->moveto(x1 + width() - 24, y1 + 2);
+    max->moveto(x1 + width() - 28, y1 + 2);
 }
-void GUImaximizebox::draw(char *dest) { GUIbox::draw(dest); }
+void GUImaximizebox::draw(char *dest) {
+  static int max_bounds_once = 5;
+  if (max_bounds_once > 0) {
+    FILE *fp = fopen("debug_draw.txt", "a");
+    if (fp) {
+      fprintf(fp, "[DRAW] GUImaximizebox %s coords=(%d,%d)-(%d,%d)\n", title,
+              x1, y1, x2, y2);
+      fclose(fp);
+    }
+    max_bounds_once--;
+  }
+  GUIbox::draw(dest);
+}
 GUIrect *GUImaximizebox::hittest(int x, int y) {
   return GUIrect::hittest(x, y);
 }
@@ -821,6 +862,9 @@ void GUIscrollbar::setposfromtrack(int tpos, int tlen) {
   if (parent)
     parent->sendmessage(this, GUIMSG_EDITCHANGED);
 }
+
+void GUIscrollbar::resize(int xw, int yw) { GUIrect::resize(xw, yw); }
+
 void GUIscrollbar::draw(char *dest) {
   drawrect(dest, 0, x1, y1, width(), height());
   GUIrect::draw(dest);
@@ -842,6 +886,15 @@ GUIvscrollbar::GUIvscrollbar(GUIrect *p, int x, int y, int h)
   down = new GUIimagebutton(this, guivol.dmark, x1, y1 + h - 12);
   track = new GUIvtrack(this);
 }
+
+void GUIvscrollbar::resize(int xw, int yw) {
+  GUIscrollbar::resize(xw, yw);
+  if (down)
+    down->moveto(x1, y1 + yw - 12);
+  if (track)
+    track->resize(12, yw - 24);
+}
+
 int GUIvscrollbar::keyhit(char scan, char key) {
   if (scan == 0x48) {
     scrollup();
@@ -861,6 +914,10 @@ GUIhscrollbar::GUIhscrollbar(GUIrect *p, int x, int y, int w)
   down = new GUIimagebutton(this, guivol.rmark, x1 + w - 12, y1);
   track = new GUIhtrack(this);
 }
+
+// void GUIhscrollbar::resize(int xw, int yw) { ... } if needed, but only
+// vertical layout fixes requested so far.
+
 int GUIhscrollbar::keyhit(char scan, char key) {
   if (scan == 0x4B) {
     scrollup();
@@ -881,6 +938,9 @@ GUItrack::GUItrack(GUIscrollbar *p, int x, int y, int xw, int yw)
   trackpos = 0;
   pscroll = p;
 }
+
+void GUItrack::resize(int xw, int yw) { GUIrect::resize(xw, yw); }
+
 void GUItrack::movethumb(int tpos) {
   trackpos = tpos;
   if (trackpos < 0)
@@ -913,6 +973,13 @@ GUIvtrack::GUIvtrack(GUIvscrollbar *p)
   tracklen = height() - 8;
   thumb = new GUIvtrackbutton(this, 8);
 }
+
+void GUIvtrack::resize(int xw, int yw) {
+  GUItrack::resize(xw, yw);
+  tracklen = height() - 8;
+  positionthumb();
+}
+
 void GUIvtrack::positionthumb() {
   if (thumb)
     thumb->moveto(x1, y1 + trackpos);
@@ -1009,6 +1076,19 @@ void GUIlistbox::setsel(int s) {
   if (sel >= scroll->getpos() + itemv)
     scroll->setpos(sel - itemv + 1);
 }
+
+void GUIlistbox::resize(int xw, int yw) {
+  GUIrect::resize(xw, yw);
+  itemv = (yw - 2) / itemheight;
+  if (scroll) {
+    scroll->moveto(x1 + xw - 12, y1);
+    scroll->resize(12, yw);
+    if (items) {
+      scroll->setrange(0, numitems > itemv ? numitems - itemv : 0);
+    }
+  }
+}
+
 GUIrect *GUIlistbox::click(mouse &m) {
   GUIrect *h = GUIrect::hittest(m.x, m.y);
   if (h && h != this)

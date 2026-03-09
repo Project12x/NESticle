@@ -226,6 +226,22 @@ int keyboard() {
   return 1;
 }
 
+extern void toggle_sdl_fullscreen();
+void toggle_emulator_fullscreen() {
+  if (guienabled) {
+    disablegui();
+    toggle_sdl_fullscreen(); // changes resolution to 256x224
+    if (nv && nv->parent)
+      ((GUImaximizebox *)nv->parent)
+          ->maximize(); // uses new SCREENX=256, SCREENY=224
+  } else {
+    toggle_sdl_fullscreen(); // changes resolution back to 640x480
+    enablegui();
+    if (nv && nv->parent && SCREENX > 320)
+      ((GUImaximizebox *)nv->parent)->restore();
+  }
+}
+
 void updatescreen() {
   pf.input_timer.enter();
   input::refreshmain();
@@ -285,16 +301,14 @@ void ROOT::refresh(int r, void *c) {
 //-----------------
 
 int cmd_loadrom(char *p) {
-  char s[128];
-  if (sscanf(p, "%s", s) < 1)
+  if (!p || !p[0])
     return 0;
   loadrom(p);
   return 1;
 }
 
 int cmd_runrom(char *p) {
-  char s[128];
-  if (sscanf(p, "%s", s) < 1)
+  if (!p || !p[0])
     return 0;
   loadrom(p);
   if (nv) {
@@ -307,8 +321,7 @@ int cmd_runrom(char *p) {
 
 void m_loadstate();
 int cmd_restorerom(char *p) {
-  char s[128];
-  if (sscanf(p, "%s", s) < 1)
+  if (!p || !p[0])
     return 0;
   loadrom(p);
   if (nv) {

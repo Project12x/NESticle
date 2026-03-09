@@ -1,11 +1,11 @@
 # Project State
 
 ## Current Phase
-**Phase 0: Planning & Analysis** - Codebase analysis complete, implementation plan finalized.
+**Phase 8: GUI Modernization** - Fixing legacy GUI frame boundaries, clipping, and resolution constraints.
 
 ## Build Status
-- **Compiles**: No (modernization not started)
-- **Runs**: No
+- **Compiles**: Yes
+- **Runs**: Yes (v0.4.0 tagged, true fullscreen working)
 
 ## Key Metrics
 - Original source files analyzed: ~25 C++, 4 ASM, ~20 headers

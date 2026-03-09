@@ -41,15 +41,19 @@
 - [ ] Fix C++ standard compliance issues
 - [ ] Resolve type conflicts with Windows headers
 
-## Phase 7: First Build & Testing [NOT STARTED]
-- [ ] Achieve zero compile errors
-- [ ] Window opens
-- [ ] Load and display a NES ROM
-- [ ] Keyboard input works
-- [ ] Sound output works
+## Phase 7: Emulation Hardening [COMPLETE]
+- [x] Fix sprite flipping bits
+- [x] Fix APU noise channel
+- [x] Fix input/keyboard mapping
+- [x] Fix SMB1 Sprite 0 CPU starvation/cycle accuracy
+
+## Phase 8: GUI Modernization [IN PROGRESS]
+- [ ] Fix overlapping minimize/maximize/close buttons in `gui_impl.cpp`
+- [ ] Implement drag-resizing for GUI frames
+- [ ] Add `ALT+ENTER` modern fullscreen scaling via SDL2
+- [ ] Implement `v0.4.0` Tag after verification
 
 ## Stretch Goals
 - [ ] Dear ImGui overlay for modern ROM browser
 - [ ] Additional mapper support
 - [ ] Save state improvements
-- [ ] Fullscreen / windowed toggle

@@ -1,6 +1,8 @@
 #ifndef _MMC_
 #define _MMC_
 
+#include "nes.h"
+
 // memory mapper types
 #define MMC_NONE 0
 #define MMC_SEQ 1
