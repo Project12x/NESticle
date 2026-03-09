@@ -57,6 +57,8 @@ extern void irq6502(void);
 
 // read6502/write6502 - called by fake6502.c, route to NESticle callbacks
 extern "C" uint8_t read6502(uint16_t address) {
+  m6502clockticks = clockticks6502; // Sync current cycle for getscanline()
+
   if (address < 0x2000) {
     // Direct RAM access (mirrored every 0x800 bytes)
     if (m6502ram)
@@ -76,6 +78,8 @@ extern "C" uint8_t read6502(uint16_t address) {
 }
 
 extern "C" void write6502(uint16_t address, uint8_t value) {
+  m6502clockticks = clockticks6502; // Sync current cycle for getscanline()
+
   if (address < 0x2000) {
     // Direct RAM write (mirrored)
     if (m6502ram)
@@ -96,6 +100,12 @@ static void sync_from_fake6502() {
   m6502clockticks = (DWORD)clockticks6502;
 }
 
+// Sync m6502 exported vars -> fake6502 state (including clock)
+static void sync_clock_to_fake6502() {
+  clockticks6502 = (uint32_t)m6502clockticks;
+  clockgoal6502 = clockticks6502;
+}
+
 // Sync m6502 exported vars -> fake6502 state
 static void sync_to_fake6502() {
   pc = (uint16_t)m6502pc;
@@ -104,6 +114,7 @@ static void sync_to_fake6502() {
   sp = (uint8_t)m6502s;
   a = (uint8_t)(m6502af >> 8);
   status = (uint8_t)(m6502af & 0xFF);
+  sync_clock_to_fake6502();
 }
 
 // ---- m6502.h API implementation ----
@@ -118,7 +129,6 @@ void __cdecl m6502reset(void) {
 
 DWORD __cdecl m6502exec(DWORD cycles) {
   sync_to_fake6502();
-  uint32_t start_ticks = clockticks6502;
   exec6502((uint32_t)cycles);
   sync_from_fake6502();
   cyclesRemaining = 0;
