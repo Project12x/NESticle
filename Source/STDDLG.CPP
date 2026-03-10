@@ -30,28 +30,114 @@ class GUImessage : public GUIcontents {
   class msgbuffer *m;
   GUIvscrollbar *scroll;
 
+  struct WrapLine {
+    int msg_idx;
+    int offset;
+    int len;
+  };
+  WrapLine wlines[MAXMSG * 5];
+  int num_wlines;
+  int last_width;
+  int last_updated;
+
 public:
+  void wrap_all() {
+    num_wlines = 0;
+    int max_w = width() - 16;
+    if (max_w < 10)
+      max_w = 10;
+
+    for (int i = 0; i < m->num; i++) {
+      char *s = m->msg[i].s;
+      if (!s)
+        continue;
+      int start = 0;
+      while (s[start]) {
+        int w = 0, c = start, last_space = -1;
+        while (s[c] && w < max_w) {
+          if (s[c] == ' ')
+            last_space = c;
+          w += font[(int)m->msg[i].color]->getwidth(s[c]);
+          if (w >= max_w)
+            break;
+          c++;
+        }
+        if (!s[c]) {
+          wlines[num_wlines++] = {i, start, c - start};
+          break;
+        } else {
+          if (last_space > start)
+            c = last_space;
+          else if (c == start)
+            c++;
+          wlines[num_wlines++] = {i, start, c - start};
+          start = c;
+          if (s[start] == ' ')
+            start++;
+        }
+        if (num_wlines >= MAXMSG * 5)
+          break;
+      }
+      if (num_wlines >= MAXMSG * 5)
+        break;
+    }
+    last_width = width();
+    last_updated = m->updated;
+  }
+
   void setrange() {
-    int yw = m->num - MSGYW;
+    wrap_all();
+    int visible_lines = height() / 10;
+    int yw = num_wlines - visible_lines;
     if (yw < 0)
       yw = 0;
     scroll->setrange(0, yw);
     scroll->setpos(yw);
     m->updated = 0;
   }
+
   GUImessage(class msgbuffer *tm) : GUIcontents(261, MSGYW * 10) {
     m = tm;
-    scroll = new GUIvscrollbar(this, width() - 12, 0, height());
+    last_width = 0;
+    last_updated = 0;
+    scroll = new GUIvscrollbar(this, x1 + width() - 12, y1, height());
     setrange();
   }
 
+  virtual void resize(int xw, int yw) {
+    GUIcontents::resize(xw, yw);
+    if (scroll) {
+      scroll->moveto(x1 + xw - 12, y1);
+      scroll->resize(12, yw);
+    }
+  }
+
   virtual void draw(char *dest) {
-    if (m->updated)
+    if (m->updated || width() != last_width) {
       setrange();
+    }
     fill(CLR_BOX);
-    m->draw(x1 + 2, y1, scroll->getpos(), MSGYW);
+
+    int pos = scroll->getpos();
+    int draw_y = y1;
+    int visible_lines = height() / 10;
+
+    for (int i = 0; i < visible_lines && (pos + i) < num_wlines; i++) {
+      WrapLine &wl = wlines[pos + i];
+      MESSAGE &msg = m->msg[wl.msg_idx];
+      if (msg.s) {
+        char temp[256];
+        int len = wl.len;
+        if (len > 255)
+          len = 255;
+        strncpy(temp, msg.s + wl.offset, len);
+        temp[len] = 0;
+        font[msg.color]->draw(temp, dest, x1 + 2, draw_y);
+      }
+      draw_y += 10;
+    }
+
     GUIrect::draw(dest);
-    //  font[0]->printf(50,50,"%d",m->num);
   }
   virtual char *getname() { return "message"; }
   virtual ~GUImessage() {}
@@ -308,7 +394,7 @@ menu filemenu = {{
     {"Get ROM info", m_getrominfo, 0, 0},
     {"Write NES header", m_writeromheader, 0, 0},
     {"-----", 0, 0, 0},
-    {"Save PCX snapshot", m_snapshot, KB_F9 | 0x80, 0},
+    {"Save PCX snapshot", m_snapshot, (char)(KB_F9 | 0x80), 0},
     {"Save Palette", m_savepalette, 0, 0},
     {"-----", 0, 0, 0},
     {"Exit", m_quit, 'q', 0},
@@ -325,17 +411,17 @@ menu NESmenu = {{
     {"Advance frame", m_advanceframe, 'a', 0},
     {"Trace", m_step, 't', 0},
     {"-----", 0, 0, 0},
-    {"Save NES state", m_savestate, KB_F5 | 0x80, 0},
-    {"Restore NES state", m_loadstate, KB_F7 | 0x80, 0},
+    {"Save NES state", m_savestate, (char)(KB_F5 | 0x80), 0},
+    {"Restore NES state", m_loadstate, (char)(KB_F7 | 0x80), 0},
     {0, NULL, 0, 0},
 }};
 
 menu viewmenu = {{
-    {"Messages", m_showmessages, KB_F1 | 0x80, 0},
+    {"Messages", m_showmessages, (char)(KB_F1 | 0x80), 0},
     {"-----", 0, 0, 0},
-    {"Pattern tables", m_patternview, KB_F2 | 0x80, 0},
-    {"Name tables", m_nametableview, KB_F3 | 0x80, 0},
-    {"Palette", m_paletteview, KB_F4 | 0x80, 0},
+    {"Pattern tables", m_patternview, (char)(KB_F2 | 0x80), 0},
+    {"Name tables", m_nametableview, (char)(KB_F3 | 0x80), 0},
+    {"Palette", m_paletteview, (char)(KB_F4 | 0x80), 0},
     {"Wave output", m_waveoutputview, 0, 0},
     {0, NULL, 0, 0},
 }};
@@ -360,7 +446,7 @@ menu redefineinputmenu = {{
 menu settingsmenu = {{
     {"Redefine input", 0, 0, &redefineinputmenu},
     {"Resolution", 0, 0, &resmenu},
-    {"Toggle sound", togglesound, KB_F8 | 0x80, 0},
+    {"Toggle sound", togglesound, (char)(KB_F8 | 0x80), 0},
     {"Flip mirroring", m_flipmirror, 'f', 0},
     {"NES Timing...", m_nestimingview, 0, 0},
 

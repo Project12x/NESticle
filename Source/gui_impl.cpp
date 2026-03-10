@@ -267,7 +267,10 @@ GUIroot::~GUIroot() {}
 int GUIroot::keyhit(char scan, char key) { return GUIrect::keyhit(scan, key); }
 
 // ---- GUIbar ----
-void GUIbar::draw(char *d) { fill(color); }
+void GUIbar::draw(char *d) {
+  fill(color);
+  GUIrect::draw(d);
+}
 
 // ---- GUIstatictext ----
 GUIstatictext::GUIstatictext(GUIrect *p, int f, char *str, int x, int y)
@@ -656,6 +659,7 @@ int GUIbox::drag(mouse &m) {
       new_h = 64;
 
     resize(new_w, new_h);
+    reposclosebutton();
     if (contents) {
       contents->resize(new_w - 4, new_h - 16);
     }
@@ -761,11 +765,18 @@ int GUImaximizebox::sendmessage(GUIrect *c, int msg) {
 GUIonebuttonbox::GUIonebuttonbox(GUIrect *p, char *str, GUIcontents *c,
                                  char *b1name, int x, int y)
     : GUIbox(p, str, c, x, y) {
-  // Extend box height to accommodate the button bar
   y2 += 18;
-  bar = new GUIbar(this, (char)CLR_BOX, x1, y1 + height() - 18, width(), 18);
-  b1 =
-      new GUItextbutton(bar, b1name, bar->x1 + (width() - 50) / 2, bar->y1 + 2);
+  bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
+  b1 = new GUItextbutton(bar, b1name, (width() - 50) / 2, 2);
+}
+void GUIonebuttonbox::resize(int xw, int yw) {
+  GUIbox::resize(xw, yw);
+  if (bar) {
+    bar->moveto(0, yw - 18);
+    bar->resize(xw, 18);
+    if (b1)
+      b1->moveto((xw - b1->width()) / 2, 2);
+  }
 }
 int GUIonebuttonbox::sendmessage(GUIrect *c, int msg) {
   if (c == (GUIrect *)b1 && msg == GUIMSG_PUSHED) {
@@ -790,12 +801,21 @@ int GUIonebuttonbox::keyhit(char scan, char key) {
 GUItwobuttonbox::GUItwobuttonbox(GUIrect *p, char *str, GUIcontents *c,
                                  char *b1name, char *b2name, int x, int y)
     : GUIbox(p, str, c, x, y) {
-  // Extend box height to accommodate the button bar
   y2 += 18;
-  bar = new GUIbar(this, (char)CLR_BOX, x1, y1 + height() - 18, width(), 18);
-  b1 = new GUItextbutton(bar, b1name, bar->x1 + width() / 4 - 25, bar->y1 + 2);
-  b2 = new GUItextbutton(bar, b2name, bar->x1 + 3 * width() / 4 - 25,
-                         bar->y1 + 2);
+  bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
+  b1 = new GUItextbutton(bar, b1name, width() / 4 - 25, 2);
+  b2 = new GUItextbutton(bar, b2name, 3 * width() / 4 - 25, 2);
+}
+void GUItwobuttonbox::resize(int xw, int yw) {
+  GUIbox::resize(xw, yw);
+  if (bar) {
+    bar->moveto(0, yw - 18);
+    bar->resize(xw, 18);
+    if (b1)
+      b1->moveto(xw / 4 - b1->width() / 2, 2);
+    if (b2)
+      b2->moveto(3 * xw / 4 - b2->width() / 2, 2);
+  }
 }
 int GUItwobuttonbox::sendmessage(GUIrect *c, int msg) {
   if (msg == GUIMSG_PUSHED) {

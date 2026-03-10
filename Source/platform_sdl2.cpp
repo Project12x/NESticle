@@ -250,16 +250,18 @@ int surface::blt(char *dest, int x, int y) {
   return 1;
 }
 
-int surface::blt(int sx, int sy, int sxw, int syw, char *dest, int x, int y) {
+int surface::blt(int sx, int sy, int sx2, int sy2, char *dest, int x, int y) {
   if (!dds)
     return 0;
   auto *sd = (SurfaceData *)dds;
-  for (int row = 0; row < syw; row++) {
+  int width = sx2 - sx;
+  int height = sy2 - sy;
+  for (int row = 0; row < height; row++) {
     int srow = sy + row;
     int dy = y + row;
     if (dy < 0 || dy >= SCREENY || srow < 0 || srow >= sd->h)
       continue;
-    for (int col = 0; col < sxw; col++) {
+    for (int col = 0; col < width; col++) {
       int scol = sx + col;
       int dx = x + col;
       if (dx < 0 || dx >= SCREENX || scol < 0 || scol >= sd->w)
@@ -773,11 +775,35 @@ int main(int argc, char *argv[]) {
       if (numtimer > 0) {
         if (nv)
           nv->refreshpalette();
-        memset(sdl_screen, 0x9E, SCREENX * SCREENY);
+        memset(sdl_screen, 0, SCREENX * SCREENY);
         screen = video = (char *)sdl_screen;
         updatescreen();
 
         convert_screen_to_argb();
+
+        // Nearest-neighbour scale NES content to fill windowlet if larger than native
+        if (nv) {
+          int src_x = nv->x1, src_y = nv->y1;
+          int src_w = nv->xw,  src_h = nv->yw; // NES native (256x224)
+          int dst_w = nv->width(), dst_h = nv->height();
+          if (dst_w > src_w || dst_h > src_h) {
+            // Copy native region to temp buffer
+            static Uint32 nes_temp[256 * 240];
+            for (int y = 0; y < src_h; y++)
+              for (int x = 0; x < src_w; x++)
+                nes_temp[y * src_w + x] =
+                    sdl_framebuffer[(src_y + y) * SCREENX + src_x + x];
+            // Scale temp into windowlet region
+            for (int y = 0; y < dst_h && (src_y + y) < SCREENY; y++) {
+              int sy = y * src_h / dst_h;
+              for (int x = 0; x < dst_w && (src_x + x) < SCREENX; x++) {
+                int sx = x * src_w / dst_w;
+                sdl_framebuffer[(src_y + y) * SCREENX + src_x + x] =
+                    nes_temp[sy * src_w + sx];
+              }
+            }
+          }
+        }
 
         // Draw animated cursor overlay directly to ARGB framebuffer
         // This replaces the static guivol.cursor with a 4-frame animation

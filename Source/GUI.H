@@ -300,8 +300,10 @@ public:
   }
 
   void reposclosebutton();
-  void resize(int xw, int yw) {
+  virtual void resize(int xw, int yw) {
     GUIrect::resize(xw, yw);
+    if (contents)
+      contents->resize(xw - 4, yw - 16);
     reposclosebutton();
   }
 
@@ -345,6 +347,7 @@ public:
   GUIonebuttonbox(GUIrect *p, char *str, GUIcontents *c, char *b1name, int x,
                   int y);
 
+  virtual void resize(int xw, int yw);
   virtual int sendmessage(GUIrect *c, int msg);
   virtual int keyhit(char kbscan, char key); // return 1 if processed
 
@@ -359,6 +362,7 @@ public:
   GUItwobuttonbox(GUIrect *p, char *str, GUIcontents *contents, char *b1name,
                   char *b2name, int x, int y);
 
+  virtual void resize(int xw, int yw);
   virtual int sendmessage(GUIrect *c, int msg);
   virtual int keyhit(char kbscan, char key); // return 1 if processed
 

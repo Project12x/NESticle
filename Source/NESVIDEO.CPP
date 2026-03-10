@@ -241,6 +241,7 @@ void natablecache::totalupdate() {
 }
 
 // draw to screen at x,y clipped to clip
+// draw to screen at x,y clipped to clip
 void natablecache::draw(int x, int y, lrect *clip) {
   int y1 = max(0, clip->y1 - y);
   int x1 = max(0, clip->x1 - x);
@@ -248,14 +249,19 @@ void natablecache::draw(int x, int y, lrect *clip) {
   int x2 = min(32 * 8, clip->x2 - x);
   int y2 = min(30 * 8, clip->y2 - y);
 
+  if (x2 <= x1 || y2 <= y1) return;
+
   // make sure tiles in this range are updated
   refresh((y1 / 8), (y2 / 8) + 1);
-  // refresh(0,30);
 
   // copy to screen!
+  // Note: sxw, syw are actually treated as x2, y2 bounds in the SDL surface::blt
+  // analogously to the original DOS surface::blt parameters
+  int dx = max(x, clip->x1);
+  int dy = max(y, clip->y1);
   if (!s->blt(x1, y1, // ur coord within source
               x2, y2, // lower right coord within source
-              screen, max(x, clip->x1), max(y, clip->y1) // destination
+              screen, dx, dy // destination
               ))
     totalupdate();
 }
@@ -398,6 +404,12 @@ void nesvideo::drawbg(char *dest, lrect *r, byte sprites) {
     }
   }
 
+  // Enforce GUI bounds
+  if (clip.x1 < x1)
+    clip.x1 = x1;
+  if (clip.x2 > x2)
+    clip.x2 = x2;
+
   scontext *c = sc.sc;
   // go through all sections
   for (int i = 0; i < sc.scnum; i++, c++)
@@ -406,6 +418,14 @@ void nesvideo::drawbg(char *dest, lrect *r, byte sprites) {
       clip.y1 = r->y1 + max(c->line, 0);
       clip.y2 = min(r->y1 + c->line + c->height, r->y2);
 
+      // Enforce GUI bounds vertically
+      if (clip.y1 < y1)
+        clip.y1 = y1;
+      if (clip.y2 > y2)
+        clip.y2 = y2;
+
+      if (clip.width() <= 0 || clip.height() <= 0)
+        continue;
       // scroll positions
       int sx = r->x1 - c->sx;
       int sy = r->y1 - c->sy - STARTFRAME; // for top clipping
@@ -481,7 +501,8 @@ inline void nesvideo::drawsprites_8x16(char *dest) {
 
 void nesvideo::drawsprites(char *dest, lrect *r) {
   // force clipping
-  CLIP clip(dest, r->x1, r->y1, r->x2, r->y2);
+  CLIP clip(dest, max(r->x1, x1), max(r->y1, y1), min(r->x2, x2),
+            min(r->y2, y2));
   // draw sprites
   if (ram[0x2000] & 32) // 8x16 sprites ?
     drawsprites_8x16(dest);
@@ -684,16 +705,14 @@ void nesvideo::draw(char *dest) {
     forcedesktopfill--;
   }
 
-  // find x,y coords of where to draw nes screen
+  // NES renders at native xw x yw from top-left of windowlet;
+  // SDL layer scales result up to fill the full windowlet
   lrect r;
-  r.x1 = x1 + (width() - xw) / 2;
-  if (r.x1 < 0)
-    r.x1 = 0;
-  r.y1 = y1 + (height() - yw) / 2;
-  if (r.y1 < 0)
-    r.y1 = 0;
-  r.x2 = r.x1 + xw;
-  r.y2 = r.y1 + yw;
+  r.x1 = x1;
+  r.y1 = y1;
+  r.x2 = x1 + xw;
+  r.y2 = y1 + yw;
+
 
   // draw background that should contain sprites
   drawbg(dest, &r, 1);
@@ -713,10 +732,25 @@ void nesvideo::draw(char *dest) {
 
   // erase edges
   if (guienabled) {
-    drawrect(dest, 0, x1, y1, width(), r.y1 - y1);         // top
-    drawrect(dest, 0, x1, r.y2, width(), y2 - r.y2);       // bottom
-    drawrect(dest, 0, x1, r.y1, r.x1 - x1, r.y2 - r.y1);   // left
-    drawrect(dest, 0, r.x2, r.y1, x2 - r.x2, r.y2 - r.y1); // right
+    int top_h = r.y1 - y1;
+    if (top_h > 0)
+      drawrect(dest, 0, x1, y1, width(), top_h);
+
+    int bot_h = y2 - r.y2;
+    if (bot_h > 0)
+      drawrect(dest, 0, x1, r.y2, width(), bot_h);
+
+    int y_start = max(y1, r.y1);
+    int y_end = min(y2, r.y2);
+    if (y_end > y_start) {
+      int left_w = r.x1 - x1;
+      if (left_w > 0)
+        drawrect(dest, 0, x1, y_start, left_w, y_end - y_start);
+
+      int right_w = x2 - r.x2;
+      if (right_w > 0)
+        drawrect(dest, 0, r.x2, y_start, right_w, y_end - y_start);
+    }
   }
 
   if (docolorcheck) {
@@ -812,8 +846,7 @@ void nesvideo::maximize() {
   cleardesktop();
 }
 void nesvideo::resize(int txw, int tyw) {
-  // msg.printf(2,"nesvideo resize %d,%d",txw,tyw);
-  GUIrect::resize(txw, tyw);
+  GUIcontents::resize(txw, tyw);
   if (maximized && parent)
     ((GUImaximizebox *)parent)->reposmaxbutton();
 }
