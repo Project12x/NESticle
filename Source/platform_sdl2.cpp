@@ -608,6 +608,11 @@ void ddrawinfo() {}
 
 // ---- MAIN ----
 int main(int argc, char *argv[]) {
+#ifdef _WIN32
+  // Prevent Windows from DPI-scaling the window (we handle scaling ourselves)
+  SetProcessDPIAware();
+#endif
+
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER |
                SDL_INIT_GAMECONTROLLER) != 0) {
     fprintf(stderr, "SDL_Init failed: %s\n", SDL_GetError());
