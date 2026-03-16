@@ -221,35 +221,29 @@ void cleardesktop();
 #include "nes.h"
 #include "nesvideo.h"
 
-void setres(int xw, int yw) {
-  // deactivate NES video surfaces if loaded
+void setviewportscale(int scale) {
+  if (!nv || !nv->parent)
+    return;
+  GUImaximizebox *box = (GUImaximizebox *)nv->parent;
+  if (box->maximized)
+    box->restore();
+  int box_w = 256 * scale + 4;
+  int box_h = 224 * scale + 16;
+  // Clamp to screen bounds
+  if (box_w > SCREENX) box_w = SCREENX;
+  if (box_h > SCREENY) box_h = SCREENY;
+  box->resize(box_w, box_h);
   if (nv) {
-    nv->realntc[0]->freesurface();
-    nv->realntc[1]->freesurface();
+    nv->resize(box_w - 4, box_h - 16);
   }
-  changeresolution(xw, yw);
-
-  root->resize(SCREENX, SCREENY);
-
-  if (nv && SCREENX <= 320)
-    ((GUImaximizebox *)nv->parent)->maximize();
-
-  // reactivate NES video surfaces if loaded
-  if (nv) {
-    nv->realntc[0]->createsurface();
-    nv->realntc[1]->createsurface();
-  }
-
+  box->reposclosebutton();
   cleardesktop();
+  msg.printf(1, "Viewport scale: %dx", scale);
 }
 
-void res256x224() { setres(256, 224); }
-void res320x200() { setres(320, 200); }
-void res320x240() { setres(320, 240); }
-void res640x400() { setres(640, 400); }
-void res640x480() { setres(640, 480); }
-void res800x600() { setres(800, 600); }
-void res1024x768() { setres(1024, 768); }
+void scale1x() { setviewportscale(1); }
+void scale2x() { setviewportscale(2); }
+void scale3x() { setviewportscale(3); }
 
 void m_flipmirror() {
   if (!nv)
@@ -427,13 +421,9 @@ menu viewmenu = {{
 }};
 
 menu resmenu = {{
-    {"256x224", res256x224, 0, 0},
-    {"320x200", res320x200, 0, 0},
-    {"320x240", res320x240, 0, 0},
-    {"640x400", res640x400, 0, 0},
-    {"640x480", res640x480, 0, 0},
-    {"800x600", res800x600, 0, 0},
-    {"1024x768", res1024x768, 0, 0},
+    {"1x (256x224)", scale1x, 0, 0},
+    {"2x (512x448)", scale2x, 0, 0},
+    {"3x (768x672)", scale3x, 0, 0},
     {0, NULL, 0, 0},
 }};
 

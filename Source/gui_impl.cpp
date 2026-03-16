@@ -735,16 +735,6 @@ void GUImaximizebox::reposmaxbutton() {
     max->moveto(x1 + width() - 28, y1 + 2);
 }
 void GUImaximizebox::draw(char *dest) {
-  static int max_bounds_once = 5;
-  if (max_bounds_once > 0) {
-    FILE *fp = fopen("debug_draw.txt", "a");
-    if (fp) {
-      fprintf(fp, "[DRAW] GUImaximizebox %s coords=(%d,%d)-(%d,%d)\n", title,
-              x1, y1, x2, y2);
-      fclose(fp);
-    }
-    max_bounds_once--;
-  }
   GUIbox::draw(dest);
 }
 GUIrect *GUImaximizebox::hittest(int x, int y) {
