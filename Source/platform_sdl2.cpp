@@ -786,17 +786,25 @@ int main(int argc, char *argv[]) {
           int src_x = nv->x1, src_y = nv->y1;
           int src_w = nv->xw,  src_h = nv->yw; // NES native (256x224)
           int dst_w = nv->width(), dst_h = nv->height();
-          if (dst_w > src_w || dst_h > src_h) {
+          // Clamp source region to framebuffer
+          if (src_x < 0) src_x = 0;
+          if (src_y < 0) src_y = 0;
+          if (src_x + src_w > SCREENX) src_w = SCREENX - src_x;
+          if (src_y + src_h > SCREENY) src_h = SCREENY - src_y;
+          // Clamp dest region to framebuffer
+          if (src_x + dst_w > SCREENX) dst_w = SCREENX - src_x;
+          if (src_y + dst_h > SCREENY) dst_h = SCREENY - src_y;
+          if (dst_w > src_w && dst_h > src_h && src_w > 0 && src_h > 0) {
             // Copy native region to temp buffer
             static Uint32 nes_temp[256 * 240];
             for (int y = 0; y < src_h; y++)
               for (int x = 0; x < src_w; x++)
                 nes_temp[y * src_w + x] =
                     sdl_framebuffer[(src_y + y) * SCREENX + src_x + x];
-            // Scale temp into windowlet region
-            for (int y = 0; y < dst_h && (src_y + y) < SCREENY; y++) {
+            // Scale temp into windowlet region (write bottom-up to avoid overwriting source)
+            for (int y = dst_h - 1; y >= 0; y--) {
               int sy = y * src_h / dst_h;
-              for (int x = 0; x < dst_w && (src_x + x) < SCREENX; x++) {
+              for (int x = dst_w - 1; x >= 0; x--) {
                 int sx = x * src_w / dst_w;
                 sdl_framebuffer[(src_y + y) * SCREENX + src_x + x] =
                     nes_temp[sy * src_w + sx];
