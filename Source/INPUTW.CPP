@@ -173,6 +173,132 @@ public:
 };
 DLGPOS redefinekeys::pos;
 
+#ifdef SDL2
+// SDL button name lookup
+static const char *getSDLButtonName(int btn) {
+  switch (btn) {
+  case SDL_CONTROLLER_BUTTON_A: return "A";
+  case SDL_CONTROLLER_BUTTON_B: return "B";
+  case SDL_CONTROLLER_BUTTON_X: return "X";
+  case SDL_CONTROLLER_BUTTON_Y: return "Y";
+  case SDL_CONTROLLER_BUTTON_BACK: return "Back";
+  case SDL_CONTROLLER_BUTTON_GUIDE: return "Guide";
+  case SDL_CONTROLLER_BUTTON_START: return "Start";
+  case SDL_CONTROLLER_BUTTON_LEFTSTICK: return "L-Stick";
+  case SDL_CONTROLLER_BUTTON_RIGHTSTICK: return "R-Stick";
+  case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return "LB";
+  case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return "RB";
+  case SDL_CONTROLLER_BUTTON_DPAD_UP: return "D-Up";
+  case SDL_CONTROLLER_BUTTON_DPAD_DOWN: return "D-Down";
+  case SDL_CONTROLLER_BUTTON_DPAD_LEFT: return "D-Left";
+  case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return "D-Right";
+  default: return "???";
+  }
+}
+
+// Widget: shows current gamepad button assignment, press gamepad button to change
+class padedit : public GUIedit {
+  int &buttonRef; // reference to padmap field
+  input *gamepadIn; // the gamepad input device for polling
+
+public:
+  padedit(GUIrect *p, char *pmpt, int x2, int y, int &btnRef, input *gin)
+      : GUIedit(p, pmpt, x2, y, 70), buttonRef(btnRef), gamepadIn(gin) {
+    moverel(-width(), 0);
+  };
+
+  virtual GUIrect *click(mouse &m) {
+    if (modal)
+      setmodal(0);
+    else
+      setmodal(this);
+    setfocus(this);
+    return 0;
+  };
+
+  virtual int release(mouse &m) { return 1; }
+
+  virtual int keyhit(char kbscan, char key) {
+    if (kbscan == KB_ESC) {
+      setmodal(0);
+      return 1;
+    }
+    // When modal, poll all gamepad buttons
+    if (modal == this && gamepadIn) {
+      // Find the SDL game controller (scan through joysticks)
+      for (int ji = 0; ji < SDL_NumJoysticks(); ji++) {
+        if (!SDL_IsGameController(ji)) continue;
+        SDL_GameController *gc = SDL_GameControllerOpen(ji);
+        if (!gc) continue;
+        for (int b = SDL_CONTROLLER_BUTTON_A;
+             b <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT; b++) {
+          if (SDL_GameControllerGetButton(gc, (SDL_GameControllerButton)b)) {
+            buttonRef = b;
+            setmodal(0);
+            parent->cyclefocus(0);
+            SDL_GameControllerClose(gc);
+            return 1;
+          }
+        }
+        SDL_GameControllerClose(gc);
+      }
+    }
+    return 1;
+  }
+
+  virtual void drawdata(char *dest, int x, int y, int xw) {
+    if (modal == this && (uu & 16))
+      drawrect(dest, 2, x, y, xw, 10);
+    font[1]->draw((char *)getSDLButtonName(buttonRef), dest, x, y);
+  }
+
+  virtual char *getname() { return "padedit"; }
+};
+
+// NES button names for gamepad redefine dialog
+static char *padButtonNames[] = {"B", "A", "Select", "Start"};
+
+class redefinepad : public GUIcontents {
+  padmap &pm;
+
+public:
+  redefinepad(padmap &tpm, input *gin) : GUIcontents(220, 60), pm(tpm) {
+    int *fields[] = {&pm.nesB, &pm.nesA, &pm.nesSelect, &pm.nesStart};
+    for (int i = 0; i < 4; i++) {
+      char s[30];
+      strcpy(s, padButtonNames[i]);
+      strcat(s, ": ");
+      new padedit(this, s, width() - 5, i * 12 + 3, *fields[i], gin);
+    }
+  };
+
+  virtual ~redefinepad() {
+    pos.close((GUIbox *)parent);
+    losefocus();
+  }
+
+  virtual int acceptfocus() { return 1; }
+
+  virtual void draw(char *dest) {
+    fill(1);
+    GUIrect::draw(dest);
+  }
+
+  virtual char *getname() { return "redefinepad"; }
+
+  // open functions
+  static DLGPOS pos;
+  static input *cachedInput;
+  static void open(padmap *pm, input *gin) {
+    cachedInput = gin;
+    pos.open(
+        new GUIbox(guiroot, "Redefine buttons", new redefinepad(*pm, gin), 0, 0));
+  };
+};
+DLGPOS redefinepad::pos;
+input *redefinepad::cachedInput = 0;
+#endif
+
 typedef input *INPUTPTR;
 class inputtestbutton : public GUIrect {
   input *in;
@@ -297,6 +423,11 @@ public:
     } else if (in && in->getkeymap()) {
       edit->settext("Redefine keys...");
       edit->moveto(x1 + 5, y1 + 130);
+#ifdef SDL2
+    } else if (in && in->getpadmap()) {
+      edit->settext("Redefine buttons...");
+      edit->moveto(x1 + 5, y1 + 130);
+#endif
     } else {
       // Hide the edit button by moving it offscreen
       edit->moveto(-200, -200);
@@ -348,6 +479,11 @@ public:
           if (in->getkeymap()) {
             redefinekeys::open(in->getkeymap());
           }
+#ifdef SDL2
+          else if (in->getpadmap()) {
+            redefinepad::open(in->getpadmap(), in);
+          }
+#endif
           // else  if (in->getjoythreshold())
           // calibratejoy::open(in->getjoythreshold());
           in->testing = 0;

@@ -120,6 +120,12 @@ int initgame() {
   // initialize input devices
   ids = &cfg->ids; // copy over input settings
 
+  // Initialize default padmaps if unset (nesStart=0 means uninitialized)
+  for (int i = 0; i < 2; i++) {
+    if (ids->pm[i].nesStart == 0)
+      ids->pm[i] = defpadmap;
+  }
+
   inputdevice[0] = newinputdevice(cfg->pinput[0]);
   inputdevice[1] = newinputdevice(cfg->pinput[1]);
 

@@ -38,6 +38,14 @@ struct joythreshold {
   int l, r, u, d; // thresholds
 };
 
+// gamepad button mapping: maps NES buttons to SDL GameController buttons
+struct padmap {
+  int nesB;      // SDL button for NES B
+  int nesA;      // SDL button for NES A
+  int nesSelect; // SDL button for NES Select
+  int nesStart;  // SDL button for NES Start
+};
+
 // defines an input device
 class input {
 public:
@@ -78,6 +86,7 @@ public:
 
   virtual struct keymap *getkeymap() { return 0; }
   virtual struct joythreshold *getjoythreshold() { return 0; }
+  virtual struct padmap *getpadmap() { return 0; }
   virtual void savesettings() {} // save settings back to ids
 
   // bind/unbind input device to an object
@@ -96,6 +105,7 @@ input *newinputdevice(int idtype, int sdlJoyIndex);
 //---------------------------
 
 extern keymap defkeymap[2];
+extern padmap defpadmap;
 
 // structure containing input device settings, calibrations for each input
 // device.
@@ -108,6 +118,9 @@ struct inputdevicesettings {
   joythreshold aj[2];
 
   int gripslot[2]; // the grip slots for grip1 and 2
+
+  // gamepad button maps
+  padmap pm[2];
 };
 
 #endif

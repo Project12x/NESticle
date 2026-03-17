@@ -38,6 +38,14 @@ keymap defkeymap[2] = {
      0x10, 0x11, 0x12, 0x1E, 0x1F, 0x20},
 };
 
+// Default gamepad button map: SDL A→NES B, SDL B→NES A (Xbox layout)
+padmap defpadmap = {
+    0, // nesB = SDL_CONTROLLER_BUTTON_A
+    1, // nesA = SDL_CONTROLLER_BUTTON_B
+    4, // nesSelect = SDL_CONTROLLER_BUTTON_BACK
+    6, // nesStart = SDL_CONTROLLER_BUTTON_START
+};
+
 // refresh during keypress
 int input::refreshkeyboard(char kbscan) {
   if (inputdevice[0])
@@ -286,10 +294,15 @@ unsigned char gravis::gravtable[] = {
 class sdlgamepad : public input {
   SDL_GameController *controller;
   int joystickIndex; // SDL joystick index (from SDL_NumJoysticks)
+  padmap *pmptr;     // pointer to stored padmap
+  padmap pm;         // local working copy
 
 public:
   sdlgamepad(int type, int sdlJoyIdx)
       : input(type), joystickIndex(sdlJoyIdx), controller(0) {
+    int pmidx = (type == ID_GAMEPAD2) ? 1 : 0;
+    pmptr = &ids->pm[pmidx];
+    pm = *pmptr;
     if (SDL_IsGameController(sdlJoyIdx))
       controller = SDL_GameControllerOpen(sdlJoyIdx);
     fprintf(stderr, "[INPUT] sdlgamepad created: joyIdx=%d controller=%p\n",
@@ -303,6 +316,9 @@ public:
       controller = 0;
     }
   }
+
+  virtual padmap *getpadmap() { return &pm; }
+  virtual void savesettings() { *pmptr = pm; }
 
   virtual void read() {
     if (!controller) {
@@ -334,16 +350,16 @@ public:
     else if (dpadUp || ly < -GAMEPAD_DEADZONE)
       stat |= ID_UP;
 
-    // NES: B, A, Select, Start
+    // NES: B, A, Select, Start — use padmap for button assignment
     oldbut = but;
     unsigned newbut = 0;
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_A))
+    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesB))
       newbut |= ID_BUT0;
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_B))
+    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesA))
       newbut |= ID_BUT1;
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_BACK))
+    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesSelect))
       newbut |= ID_BUT2;
-    if (SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_START))
+    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesStart))
       newbut |= ID_BUT3;
     but = newbut;
     stat |= ((oldbut ^ but) & but);
