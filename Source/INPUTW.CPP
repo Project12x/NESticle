@@ -84,8 +84,7 @@ class keyedit : public GUIedit {
   char &keyscan; // scancode to be modified
 public:
   keyedit(GUIrect *p, char *pmpt, int x2, int y, char &scan)
-      : GUIedit(p, pmpt, x2, y, 70), keyscan(scan) {
-    moverel(-width(), 0);
+      : GUIedit(p, pmpt, x2, y, 170), keyscan(scan) {
     keyname = getkeyname(keyscan);
   };
 
@@ -146,7 +145,7 @@ public:
       char s[30];
       strcpy(s, mapnames[i]);
       strcat(s, ": ");
-      new keyedit(this, s, 100, i * 12 + 3, ((char *)&km)[i]);
+      new keyedit(this, s, 5, i * 12 + 3, ((char *)&km)[i]);
     }
   };
 
