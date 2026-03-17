@@ -425,9 +425,11 @@ GUIrect *GUIedit::click(mouse &m) { return this; }
 void GUIedit::draw(char *dest) {
   if (font[FNT_EDITPROMPT])
     font[FNT_EDITPROMPT]->draw(prompt, dest, x1, y1);
-  drawrect(dest, CLR_EDITINPUT, x1 + promptw + 2, y1, inputmaxw - promptw - 2,
-           height());
-  drawdata(dest, x1 + promptw + 4, y1 + 1, inputmaxw - promptw - 6);
+  int editw = inputmaxw - promptw - 2;
+  if (editw > 0) {
+    drawrect(dest, CLR_EDITINPUT, x1 + promptw + 2, y1, editw, height());
+    drawdata(dest, x1 + promptw + 4, y1 + 1, editw - 4 > 0 ? editw - 4 : 0);
+  }
   if (focus)
     outline((char)15);
   GUIrect::draw(dest);
