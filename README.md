@@ -1,20 +1,32 @@
 # NESticle (Modernized)
 
-A modernization of the NESticle NES emulator (v0.2) originally created by Icer Addis / Bloodlust Software (~1997). This project ports the leaked source code to compile and run on modern Windows using contemporary tools and libraries.
+A restoration of the legendary NESticle NES emulator (v0.2) originally created by Icer Addis / Bloodlust Software in 1997. Nearly 30 years later, this project brings the iconic emulator back to life on modern Windows with full GUI, gamepad support, and improved audio mixing.
 
-## Background
+## What is NESticle?
 
-NESticle was one of the earliest and most popular NES emulators for DOS and Windows 95. The source code was leaked in 1997 and later made publicly available. This project preserves the original architecture while replacing obsolete platform dependencies with modern equivalents.
+NESticle was one of the first widely-used NES emulators, famous for its distinctive GUI, the bloody glove cursor, and making NES emulation accessible on Pentium-class PCs. It was a landmark piece of software in the emulation scene of the late 1990s.
 
-## Modernization Approach
+This is not meant to compete with modern, cycle-accurate emulators like Mesen or FCEUX. This is a **preservation project** -- the original NESticle experience, running natively on modern hardware.
+
+## What Changed
 
 | Component | Original (1997) | Modern Replacement |
 |---|---|---|
 | Compiler | Borland C++ / Watcom | MSVC (Visual Studio 2022) |
 | Platform | DOS / Win95 DirectDraw+DirectSound | SDL2 |
 | 6502 CPU | x86 ASM + restrictive C++ core | fake6502 (public domain) |
-| NES APU | Incomplete (3/5 channels) | Blargg's nes_apu (LGPL) |
-| Rendering ASM | TASM/MASM x86 assembly | Portable C implementations |
+| Rendering | TASM/MASM x86 assembly blitters | Portable C implementations |
+| Audio Mixer | 3-channel linear mixer | 5-channel NES hardware DAC formulas |
+| Input | Win95 keyboard only | SDL2 keyboard + GameController |
+
+## What Stayed the Same
+
+- The original NESticle GUI system (8-bit palettized widgets)
+- The PPU rendering engine
+- The mapper implementations
+- The ROM loader and save state format
+- The bloody glove cursor
+- The overall "feel" of NESticle circa 1997
 
 ## Building
 
@@ -29,10 +41,39 @@ cmake -B build -G "Visual Studio 17 2022"
 cmake --build build --config Release
 ```
 
+## Quick Start
+
+1. Place `gui.vol` in the same directory as the executable
+2. Run `NESticle.exe`
+3. Load a ROM via the File menu or drag-and-drop
+4. Play with keyboard (arrows + Z/X/Tab/Enter) or any SDL-compatible gamepad
+
+## Controls
+
+| Input | Action |
+|---|---|
+| Arrow keys | D-pad |
+| Z / X | B / A |
+| Tab / Enter | Select / Start |
+| ALT+ENTER | Toggle fullscreen |
+| Gamepad | Automatic (remappable via Settings) |
+
 ## Status
 
-**Work in Progress** - See [STATE.md](STATE.md) and [ROADMAP.md](ROADMAP.md) for current progress.
+**v0.5.0 -- Feature Complete.** See [CHANGELOG.md](CHANGELOG.md) for details.
+
+## Documentation
+
+- [HOWTO.md](HOWTO.md) -- Build instructions, controls, configuration
+- [ARCHITECTURE.md](ARCHITECTURE.md) -- System design and component overview
+- [STATE.md](STATE.md) -- Current project status
+- [ROADMAP.md](ROADMAP.md) -- Development phases
+- [CHANGELOG.md](CHANGELOG.md) -- Version history
 
 ## License
 
-NESticle is (c) Bloodlust Software. The original source was leaked and has no clear open-source license. Modern replacement components (fake6502, Blargg's APU, SDL2) carry their own permissive licenses.
+NESticle is (c) Bloodlust Software / Icer Addis. The original source code has no clear open-source license. This project is a restoration effort made in good faith for preservation purposes. If the original author objects, this repository will be taken down.
+
+Modern replacement components carry their own permissive licenses:
+- fake6502 (public domain)
+- SDL2 (zlib license)

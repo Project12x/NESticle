@@ -3,10 +3,19 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.5.0] - 2026-03-17
 
-### Planned
-- GUI Modernization (remaining dialogs need 640x480 layout pass)
+### Added
+- **Gamepad button remapping**: New "Redefine buttons..." dialog lets users remap NES B/A/Select/Start to any SDL GameController button. Accessible from the input device dialog when a gamepad is selected.
+- **`padmap` struct**: Stores per-player gamepad button assignments, persisted in `inputdevicesettings`.
+- **NES hardware nonlinear mixer**: Implements the actual NES DAC formulas (`pulse_out = 95.88/(8128/p+100)`, `tnd_out = 159.79/(1/(t/8227+n/12241+d/22638)+100)`) for hardware-accurate channel mixing. Togglable via `nessound::nonlinear_mixing`.
+- **DC blocking high-pass filter**: Removes DC offset from the nonlinear mixer's unipolar [0,1] output, preserving only the AC audio signal (~7 Hz cutoff).
+- **Mixer mode diagnostic**: Startup log confirms which mixer mode is active.
+
+### Fixed
+- **Input dialog buttons**: "Redefine keys..." and "Save settings" buttons no longer disappear or spawn outside the dialog window when changing input device. Buttons are created once and updated via `settext()`/`moveto()` instead of delete/recreate.
+- **Gamepad button polling**: Switched from keyboard-triggered `keyhit()` to frame-based polling in `drawdata()` with `SDL_GameControllerUpdate()`.
+- **Uninitialized `raw_vol`**: All `neschannel` state (`vol`, `raw_vol`, `count`, `K`, `freq`) now zero-initialized in `reset()`, preventing garbage noise output.
 
 ## [0.4.2] - 2026-03-17
 
@@ -23,50 +32,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [0.4.1] - 2026-03-09
 
 ### Fixed
-- **GUIVOL struct alignment**: Added missing `sfont` and 12 other fields to match original gui.vol entry order; all icons (scrollbar arrows, close/maximize buttons, checkmarks) now display correctly
-- **GUI constructor coordinates**: Fixed 5 widget constructors using relative coordinates where absolute were required (close button, accept bar, scrollbar, number edit arrows)
+- **GUIVOL struct alignment**: Added missing `sfont` and 12 other fields to match original gui.vol entry order; all icons now display correctly
+- **GUI constructor coordinates**: Fixed 5 widget constructors using relative coordinates where absolute were required
 - **Button bar overlap**: GUIonebuttonbox/GUItwobuttonbox now extend box height by 18px for the bottom button bar
-- **Popup menu crash**: Fixed use-after-free in GUIpopupmenu::domenuitem() — mouse capture pointer cleared before popup self-deletion
+- **Popup menu crash**: Fixed use-after-free in GUIpopupmenu::domenuitem()
 
 ## [0.4.0] - 2026-03-09
 
 ### Added
 - **True Fullscreen**: ALT+ENTER toggles between 640x480 windowed GUI and 256x224 native NES fullscreen
-- **SDL Logical Scaling**: `SDL_RenderSetLogicalSize` handles aspect-ratio-correct scaling and letterboxing
-- **Command-line ROM loading**: Fixed `cmd_runrom`/`cmd_loadrom`/`cmd_restorerom` to handle file paths with spaces
-
-### Fixed
-- **Mouse mapping**: Uses SDL logical coordinate space instead of manual window-to-buffer scaling
+- **SDL Logical Scaling**: Aspect-ratio-correct scaling and letterboxing
+- **Command-line ROM loading**: Fixed path handling for files with spaces
 
 ## [0.3.1] - 2026-03-08
 
 ### Fixed
-- **SMB1 Freeze**: Fixed an emulation freeze where SMB1 infinitely spun on the title screen waiting for Sprite 0 Hit.
-- **Clock Synchronization**: Mended `m6502_shim.cpp` to accurately synthesize cycle counts mid-instruction from `fake6502` to NESticle's PPU engine (`m6502clockticks = clockticks6502;`), ensuring hardware scanlines compute accurately for CPU-PPU traps.
-- **Clear-On-Read**: Properly hooked up `NES.CPP` `$2002` reads to clear the VBlank flag (`ram[0x2002] &= ~0x80;`), fixing NMI runaway hazards in SMB1.
+- **SMB1 Freeze**: Fixed emulation freeze (Sprite 0 Hit CPU starvation)
+- **Clock Synchronization**: Accurate cycle count synthesis from fake6502 to NESticle PPU
+- **Clear-On-Read**: $2002 VBlank flag properly cleared on read
 
 ## [0.3.0] - 2026-03-07
 
 ### Fixed
-- **Sprite Flipping**: Repaired 8-bit signed integer casts for sprite `flipx`/`flipy`, restoring correct orientation in SMB1/SMB3.
-- **Palette Bleeding**: Masked `attrib` byte with `& 3` so higher bits don't corrupt the sprite palette rendering function.
-- **Noise Channel timing**: Adjusted LFSR duty/volume and fixed unipolar offset bugs causing SMB1/SMB3 sound effects to sound corrupted.
-- **Input System**: Removed dirty mapping and restored standard Win95 keyboard scanning via SDL2.
+- **Sprite Flipping**: Repaired 8-bit signed integer casts for flipx/flipy
+- **Palette Bleeding**: Masked attrib byte with `& 3`
+- **Noise Channel timing**: LFSR duty/volume fixes
+- **Input System**: Restored standard keyboard scanning via SDL2
 
 ### Added
-- Animated cursor rendering bypassing the 8-bit palette via ARGB framebuffer overlay.
+- Animated cursor rendering via ARGB framebuffer overlay
 
 ### Discovered
-- Complete missing source code recovered from SOUND.ZIP archive:
-  - 6502 CPU core (C++ portable version + x86 ASM version)
-  - Win95 DirectDraw/DirectSound platform backend
-  - DOS platform backend
-  - Win95 keyboard handler
-
-### Planned
-- CMake build system with SDL2
-- fake6502 CPU core (public domain, replacing restrictive original)
-- Blargg's nes_apu (LGPL, replacing incomplete 3-channel original)
-- C replacements for x86 ASM tile/sprite blitters
-- SDL2 platform backend replacing DirectDraw/DirectSound
-- MSVC compatibility fixes for Borland/Watcom C++ idioms
+- Complete missing source code recovered from SOUND.ZIP archive
