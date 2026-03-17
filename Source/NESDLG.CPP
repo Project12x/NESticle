@@ -123,7 +123,7 @@ class loaddlg : public GUIcontents {
   GUIstringlistbox *list;
 
 public:
-  loaddlg() : GUIcontents(140, 150) {
+  loaddlg() : GUIcontents(200, 150) {
     //  list=new GUIstringlistbox(this,5,5,width()-10,9,10);
     list = new GUIdirlistbox(this, 5, 5, width() - 10, 14, "*.nes");
     list->setsel(0);

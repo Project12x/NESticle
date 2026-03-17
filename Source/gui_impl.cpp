@@ -705,7 +705,7 @@ GUImaximizebox::GUImaximizebox(GUIrect *p, char *titlestr, GUIcontents *c,
                                int x, int y)
     : GUIbox(p, titlestr, c, x, y) {
   maximized = 0;
-  max = new GUIimagebutton(this, 0, width() - 28, 2);
+  max = new GUIimagebutton(this, guivol.wmmark, width() - 28, 2);
   reposmaxbutton();
 }
 void GUImaximizebox::maximize() {
