@@ -337,6 +337,7 @@ public:
   void reposmaxbutton();
   virtual GUIrect *hittest(int x, int y);
   virtual int sendmessage(GUIrect *c, int msg);
+  virtual int keyhit(char kbscan, char key);
 };
 
 class GUIonebuttonbox : public GUIbox {

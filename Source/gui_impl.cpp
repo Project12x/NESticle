@@ -750,6 +750,13 @@ int GUImaximizebox::sendmessage(GUIrect *c, int msg) {
   }
   return GUIbox::sendmessage(c, msg);
 }
+int GUImaximizebox::keyhit(char scan, char key) {
+  if (scan == 0x01 && maximized) { // Escape
+    restore();
+    return 1;
+  }
+  return GUIbox::keyhit(scan, key);
+}
 
 // ---- GUIonebuttonbox ----
 GUIonebuttonbox::GUIonebuttonbox(GUIrect *p, char *str, GUIcontents *c,
@@ -1131,7 +1138,10 @@ int GUIlistbox::drag(mouse &m) { return 1; }
 void GUIlistbox::draw(char *dest) {
   fill((char)0);
   outline((char)(focus ? 15 : 8));
-  drawitems(dest, x1 + 1, y1 + 1);
+  {
+    CLIP clip(dest, x1 + 1, y1 + 1, x2 - 14, y2 - 1);
+    drawitems(dest, x1 + 1, y1 + 1);
+  }
   GUIrect::draw(dest);
 }
 int GUIlistbox::keyhit(char scan, char key) {
