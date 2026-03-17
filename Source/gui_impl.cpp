@@ -1469,7 +1469,7 @@ int GUIpopupmenu::release(mouse &m) {
     selmi = 0;
     return domenuitem(saved);
   }
-  // Click outside any item — close the popup
+  // No item selected — release capture but keep popup for click-to-select
   return 1;
 }
 void GUIpopupmenu::draw(char *dest) { GUIvmenu::draw(dest); }
