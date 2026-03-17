@@ -251,7 +251,8 @@ void updatescreen() {
     pf.gui_timer.enter();
     // draw everything
     root->draw(screen);
-    m.draw(screen); // draw cursor
+    // Cursor drawn as ARGB overlay in platform_sdl2.cpp after NN scale
+    // m.draw(screen);
     pf.gui_timer.leave();
   } else if (nv)
     nv->draw(screen);

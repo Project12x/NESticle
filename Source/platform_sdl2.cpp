@@ -652,6 +652,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
+  // Hide OS cursor — NESticle draws its own ARGB cursor overlay
+  SDL_ShowCursor(SDL_DISABLE);
+
   sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_ACCELERATED);
   if (!sdl_renderer)
     sdl_renderer = SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_SOFTWARE);
