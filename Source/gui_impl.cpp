@@ -1138,10 +1138,7 @@ int GUIlistbox::drag(mouse &m) { return 1; }
 void GUIlistbox::draw(char *dest) {
   fill((char)0);
   outline((char)(focus ? 15 : 8));
-  {
-    CLIP clip(dest, x1 + 1, y1 + 1, x2 - 14, y2 - 1);
-    drawitems(dest, x1 + 1, y1 + 1);
-  }
+  drawitems(dest, x1 + 1, y1 + 1);
   GUIrect::draw(dest);
 }
 int GUIlistbox::keyhit(char scan, char key) {
