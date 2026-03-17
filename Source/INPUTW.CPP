@@ -282,6 +282,15 @@ public:
       }
       lastintype = in->type;
     }
+
+    // Create initial buttons for the current device
+    if (in) {
+      if (in->getjoythreshold())
+        edit = new GUItextbutton(this, "Calibrate...", 60, 90);
+      else if (in->getkeymap())
+        edit = new GUItextbutton(this, "Redefine keys...", 60, 90);
+    }
+    save = new GUItextbutton(this, "Save settings", 60, 105);
   }
 
   void changedevice(int listIdx) {
