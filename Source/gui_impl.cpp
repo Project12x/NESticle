@@ -712,12 +712,18 @@ GUImaximizebox::GUImaximizebox(GUIrect *p, char *titlestr, GUIcontents *c,
                                int x, int y)
     : GUIbox(p, titlestr, c, x, y) {
   maximized = 0;
+  save_x1 = save_y1 = save_w = save_h = 0;
   max = new GUIimagebutton(this, guivol.wmmark, width() - 28, 2);
   reposmaxbutton();
 }
 void GUImaximizebox::maximize() {
   if (maximized)
     return;
+  // Save pre-maximize position and size
+  save_x1 = x1;
+  save_y1 = y1;
+  save_w = width();
+  save_h = height();
   maximized = 1;
   moveto(0, 0);
   resize(SCREENX, SCREENY);
@@ -732,8 +738,13 @@ void GUImaximizebox::restore() {
   if (!maximized)
     return;
   maximized = 0;
-  if (contents)
+  // Restore pre-maximize position and size
+  moveto(save_x1, save_y1);
+  resize(save_w, save_h);
+  if (contents) {
+    contents->resize(save_w - 4, save_h - 16);
     contents->restore();
+  }
   reposclosebutton();
   reposmaxbutton();
 }
@@ -764,6 +775,8 @@ int GUImaximizebox::sendmessage(GUIrect *c, int msg) {
 }
 int GUImaximizebox::keyhit(char scan, char key) {
   if (scan == 0x01 && maximized) { // Escape
+    extern void enablegui();
+    enablegui();
     restore();
     return 1;
   }

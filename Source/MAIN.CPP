@@ -190,6 +190,11 @@ int keyboard() {
   if (kbscan == KB_ESC) {
     if (is_sdl_fullscreen()) {
       toggle_emulator_fullscreen();
+    } else if (!guienabled && nv && nv->parent &&
+               ((GUImaximizebox *)nv->parent)->maximized) {
+      // Windowed fullscreen: restore viewport and re-enable GUI
+      enablegui();
+      ((GUImaximizebox *)nv->parent)->restore();
     } else {
       togglegui();
     }

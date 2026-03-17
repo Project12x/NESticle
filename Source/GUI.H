@@ -319,6 +319,7 @@ public:
 
 class GUImaximizebox : public GUIbox {
   GUIbutton *max; // maximize button
+  int save_x1, save_y1, save_w, save_h; // pre-maximize position/size
 public:
   int maximized; // are we maximized?
   GUImaximizebox(GUIrect *p, char *titlestr, GUIcontents *c, int x, int y);
