@@ -474,9 +474,11 @@ void nessound::mix16(short *b, int nums) {
       float pulse_out = pulse_table[p < 30 ? p : 30];
 
       // TND DAC: tnd_out = 159.79 / (1/(t/8227 + n/12241 + d/22638) + 100)
+      // Noise raw value halved for psychoacoustic compensation
+      // (broadband noise is perceived ~6dB louder than tones at same amplitude)
       float tnd_sum = 0;
       if (ch[2]->rawbuf[i]) tnd_sum += ch[2]->rawbuf[i] / 8227.0f;
-      if (ch[3]->rawbuf[i]) tnd_sum += ch[3]->rawbuf[i] / 12241.0f;
+      if (ch[3]->rawbuf[i]) tnd_sum += (ch[3]->rawbuf[i] * 0.5f) / 12241.0f;
       if (ch[4]->rawbuf[i]) tnd_sum += ch[4]->rawbuf[i] / 22638.0f;
       float tnd_out = tnd_sum > 0 ? 159.79f / (1.0f / tnd_sum + 100.0f) : 0;
 
