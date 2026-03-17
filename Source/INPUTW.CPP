@@ -223,9 +223,13 @@ public:
       setmodal(0);
       return 1;
     }
-    // When modal, poll all gamepad buttons
-    if (modal == this && gamepadIn) {
-      // Find the SDL game controller (scan through joysticks)
+    return 0;
+  }
+
+  virtual void drawdata(char *dest, int x, int y, int xw) {
+    // Poll gamepad buttons every frame when in modal (waiting for input)
+    if (modal == this) {
+      SDL_GameControllerUpdate();
       for (int ji = 0; ji < SDL_NumJoysticks(); ji++) {
         if (!SDL_IsGameController(ji)) continue;
         SDL_GameController *gc = SDL_GameControllerOpen(ji);
@@ -237,18 +241,15 @@ public:
             setmodal(0);
             parent->cyclefocus(0);
             SDL_GameControllerClose(gc);
-            return 1;
+            goto done_polling;
           }
         }
         SDL_GameControllerClose(gc);
       }
+    done_polling:;
+      if (modal == this && (uu & 16))
+        drawrect(dest, 2, x, y, xw, 10);
     }
-    return 1;
-  }
-
-  virtual void drawdata(char *dest, int x, int y, int xw) {
-    if (modal == this && (uu & 16))
-      drawrect(dest, 2, x, y, xw, 10);
     font[1]->draw((char *)getSDLButtonName(buttonRef), dest, x, y);
   }
 
