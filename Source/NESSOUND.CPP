@@ -490,7 +490,7 @@ void nessound::mix16(short *b, int nums) {
       dc_prev_out = filtered;
 
       // Scale to 16-bit (~80% of range)
-      int sample = (int)(filtered * 26000.0f);
+      int sample = (int)(filtered * 16000.0f);
       if (sample > 32767) sample = 32767;
       if (sample < -32768) sample = -32768;
       b[i] = (short)sample;
