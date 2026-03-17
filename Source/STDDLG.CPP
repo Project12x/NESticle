@@ -232,6 +232,13 @@ void setviewportscale(int scale) {
   // Clamp to screen bounds
   if (box_w > SCREENX) box_w = SCREENX;
   if (box_h > SCREENY) box_h = SCREENY;
+  // Move box so it stays within screen
+  int bx = box->x1, by = box->y1;
+  if (bx + box_w > SCREENX) bx = SCREENX - box_w;
+  if (by + box_h > SCREENY) by = SCREENY - box_h;
+  if (bx < 0) bx = 0;
+  if (by < 0) by = 0;
+  box->moveto(bx, by);
   box->resize(box_w, box_h);
   if (nv) {
     nv->resize(box_w - 4, box_h - 16);
