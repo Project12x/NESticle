@@ -95,7 +95,7 @@ int vols[16] = {
 
 void squarewave::setvolume() {
   vol = vols[sr.cr1.playbackrate]; // set volume
-  // if (!sr.cr1.envelopefixed) vol<<=1;
+  raw_vol = sr.cr1.playbackrate;  // track raw level
 }
 
 void squarewave::mix16(short *b, int nums) {
@@ -119,7 +119,6 @@ void squarewave::mix16(short *b, int nums) {
       if (!sr.cr1.envelopefixed)
         if (--vol < 0)
           return;
-      // if (!(dur&127))
       K += deltaK;
     }
   }
@@ -127,6 +126,28 @@ void squarewave::mix16(short *b, int nums) {
     noteon = 0;
     return;
   }
+}
+
+void squarewave::mixraw(int nums) {
+  memset(rawbuf, 0, nums * sizeof(short));
+  if (!noteon || raw_vol <= 0) {
+    if (noteon) { dur -= nums; if (dur < 0) noteon = 0; }
+    return;
+  }
+  int d = duty[sr.cr1.dutycycle];
+  int rv = raw_vol;
+  for (int i = 0; i < nums && dur > 0; i++, dur--) {
+    rawbuf[i] = (count < d) ? rv : 0;
+    count += K;
+    count &= 0xFFFF;
+    if (!(dur & 255)) {
+      if (!sr.cr1.envelopefixed)
+        if (--rv < 0) { raw_vol = 0; return; }
+      K += deltaK;
+    }
+  }
+  raw_vol = rv;
+  if (dur < 0) { noteon = 0; }
 }
 
 //----------------------
@@ -151,12 +172,30 @@ void trianglewave::mix16(short *b, int nums) {
     else
       x = 0x4000 - (count & 0x7FFF); // negative slope
     b[i] += x * vol / 0x4000;
-    //   if (!(dur&31) && !sr.cr1.envelopefixed)  vol--;
   }
   if (dur < 0) {
     noteon = 0;
     return;
   }
+}
+
+void trianglewave::mixraw(int nums) {
+  memset(rawbuf, 0, nums * sizeof(short));
+  if (!noteon || !r[0]) {
+    if (noteon) { dur -= nums; if (dur < 0) noteon = 0; }
+    return;
+  }
+  for (int i = 0; i < nums && dur > 0; i++, dur--) {
+    count += K;
+    // Triangle counter outputs 0-15 (up) then 15-0 (down)
+    // Map 16-bit counter to 0-15 range
+    int phase = (count >> 12) & 0xF; // 0-15
+    if (count & 0x8000)
+      rawbuf[i] = 15 - phase; // descending
+    else
+      rawbuf[i] = phase; // ascending
+  }
+  if (dur < 0) { noteon = 0; }
 }
 //=============================================
 
@@ -223,7 +262,10 @@ void neschannel::setenable(byte x) {
 static const int noise_period_table[16] = {
     4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
 
-void noisewave::setvolume() { vol = vols[sr.cr1.playbackrate]; }
+void noisewave::setvolume() {
+  vol = vols[sr.cr1.playbackrate];
+  raw_vol = sr.cr1.playbackrate;
+}
 
 void noisewave::startnote() {
   // r[2] bits 0-3 = period index, bit 7 = mode (short/long)
@@ -285,6 +327,38 @@ void noisewave::mix16(short *b, int nums) {
   }
 }
 
+void noisewave::mixraw(int nums) {
+  memset(rawbuf, 0, nums * sizeof(short));
+  if (!noteon || raw_vol <= 0) {
+    if (noteon) { dur -= nums; if (dur < 0) noteon = 0; }
+    return;
+  }
+  int mode_short = r[2] & 0x80;
+  int cycles_per_sample = 1789773 / SOUNDRATE;
+  int rv = raw_vol;
+
+  for (int i = 0; i < nums && dur > 0; i++, dur--) {
+    rawbuf[i] = (lfsr & 1) ? rv : 0;
+    timer += cycles_per_sample;
+    while (timer >= period) {
+      timer -= period;
+      int feedback;
+      if (mode_short)
+        feedback = (lfsr & 1) ^ ((lfsr >> 6) & 1);
+      else
+        feedback = (lfsr & 1) ^ ((lfsr >> 1) & 1);
+      lfsr >>= 1;
+      lfsr |= (feedback << 14);
+    }
+    if (!(dur & 255)) {
+      if (!sr.cr1.envelopefixed)
+        if (--rv < 0) { raw_vol = 0; return; }
+    }
+  }
+  raw_vol = rv;
+  if (dur < 0) { noteon = 0; }
+}
+
 //----------------------
 // DMC channel - Delta Modulation
 // NES $4010-$4013: simplified (no ROM sample fetching in this implementation)
@@ -313,9 +387,18 @@ void dmcwave::mix16(short *b, int nums) {
   }
 }
 
+void dmcwave::mixraw(int nums) {
+  // DMC raw output is the 7-bit output level (0-127)
+  short level = noteon ? (short)output_level : 0;
+  for (int i = 0; i < nums; i++)
+    rawbuf[i] = level;
+}
+
 //===================================================
 // main sound device
 void nessound::write(byte a, byte d) { ch[a / 4]->write(a & 3, d); }
+
+int nessound::nonlinear_mixing = 1; // default to NES hardware mixer
 
 nessound::nessound() {
   ch[0] = new squarewave;
@@ -323,7 +406,15 @@ nessound::nessound() {
   ch[2] = new trianglewave;
   ch[3] = new noisewave;
   ch[4] = new dmcwave;
+  init_tables();
   clearprimary();
+}
+
+void nessound::init_tables() {
+  // NES pulse DAC: pulse_out = 95.88 / (8128/n + 100)
+  pulse_table[0] = 0.0f;
+  for (int n = 1; n <= 30; n++)
+    pulse_table[n] = 95.88f / (8128.0f / n + 100.0f);
 }
 
 nessound::~nessound() {
@@ -351,9 +442,6 @@ void nessound::print() {
   //  ch[i]->print(50,50+i*10);
 }
 
-//------
-// mixing
-
 // mixes nums 16 samples to *b
 void nessound::mix16(short *b, int nums) {
   // clear buffer
@@ -361,10 +449,40 @@ void nessound::mix16(short *b, int nums) {
   if (!CPURunning)
     return;
 
-  // mix all sound channels
-  for (int i = 0; i < 5; i++)
-    if (ch[i]->enabled)
-      ch[i]->mix16(b, nums);
+  if (nonlinear_mixing) {
+    // NES hardware nonlinear mixer
+    // Each channel outputs raw DAC levels
+    for (int i = 0; i < 5; i++)
+      if (ch[i]->enabled)
+        ch[i]->mixraw(nums);
+      else
+        memset(ch[i]->rawbuf, 0, nums * sizeof(short));
+
+    for (int i = 0; i < nums; i++) {
+      // Pulse DAC: pulse_out = 95.88 / (8128/(p1+p2) + 100)
+      int p = ch[0]->rawbuf[i] + ch[1]->rawbuf[i];
+      float pulse_out = pulse_table[p < 30 ? p : 30];
+
+      // TND DAC: tnd_out = 159.79 / (1/(t/8227 + n/12241 + d/22638) + 100)
+      float tnd_sum = 0;
+      if (ch[2]->rawbuf[i]) tnd_sum += ch[2]->rawbuf[i] / 8227.0f;
+      if (ch[3]->rawbuf[i]) tnd_sum += ch[3]->rawbuf[i] / 12241.0f;
+      if (ch[4]->rawbuf[i]) tnd_sum += ch[4]->rawbuf[i] / 22638.0f;
+      float tnd_out = tnd_sum > 0 ? 159.79f / (1.0f / tnd_sum + 100.0f) : 0;
+
+      // Combined NES output is [0, ~1.0], center and scale to 16-bit
+      float combined = pulse_out + tnd_out;
+      int sample = (int)((combined - 0.5f) * 50000.0f);
+      if (sample > 32767) sample = 32767;
+      if (sample < -32768) sample = -32768;
+      b[i] = (short)sample;
+    }
+  } else {
+    // Original NESticle linear mixer
+    for (int i = 0; i < 5; i++)
+      if (ch[i]->enabled)
+        ch[i]->mix16(b, nums);
+  }
 }
 
 short nessound::mixingbuf[4096];

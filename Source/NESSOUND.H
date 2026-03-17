@@ -49,8 +49,11 @@ protected:
   int deltaK; // change in freq counter over time
   int count;  // frequency counter (period is 0x10000)
   short vol;  // current 16-bit volume
+  int raw_vol; // current raw volume level (0-15) for nonlinear mixer
 
 public:
+  short rawbuf[4096]; // raw DAC output per sample for nonlinear mixer
+
   void setenable(byte x);
   void reset();
   virtual void startnote();
@@ -61,6 +64,7 @@ public:
   void write(byte a, byte d);
   virtual void mix8(short *b, int nums) {}
   virtual void mix16(short *b, int nums) {}
+  virtual void mixraw(int nums) { memset(rawbuf, 0, nums * sizeof(short)); }
   virtual void setvolume() {}
   virtual void print(int x, int y);
 };
@@ -68,12 +72,14 @@ public:
 class squarewave : public neschannel {
 public:
   virtual void mix16(short *b, int nums);
+  virtual void mixraw(int nums);
   virtual void setvolume();
 };
 
 class trianglewave : public neschannel {
 public:
   virtual void mix16(short *b, int nums);
+  virtual void mixraw(int nums);
   virtual void setvolume();
 };
 
@@ -84,6 +90,7 @@ class noisewave : public neschannel {
 public:
   noisewave() : lfsr(1), timer(0), period(4) {}
   virtual void mix16(short *b, int nums);
+  virtual void mixraw(int nums);
   virtual void setvolume();
   virtual void startnote();
 };
@@ -95,6 +102,7 @@ class dmcwave : public neschannel {
 public:
   dmcwave() : timer(0), period(428), output_level(0) {}
   virtual void mix16(short *b, int nums);
+  virtual void mixraw(int nums);
   virtual void setvolume();
 };
 
@@ -103,8 +111,14 @@ public:
 class nessound {
   neschannel *ch[5]; // 5 channels
 
+  // Precomputed NES DAC lookup tables
+  float pulse_table[31]; // pulse DAC: index = pulse1 + pulse2 (0-30)
+  void init_tables();
+
 public:
   byte enablebits;
+  static int nonlinear_mixing; // 0=linear (original), 1=NES hardware nonlinear
+
   void write(byte a, byte d);
   void setenable(byte d); // set sound enables
   void reset();
