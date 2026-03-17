@@ -1167,13 +1167,25 @@ void GUIstringlistbox::drawitems(char *dest, int x, int y) {
   if (!font[3])
     return;
   int start = scroll->getpos();
+  int maxpx = width() - 16; // available text width (minus scrollbar)
   for (int i = 0; i < itemv && (start + i) < numitems; i++) {
     char *s = (char *)items[start + i];
     if (!s)
       continue;
     if (start + i == sel)
       drawrect(dest, 2, x, y + i * itemheight, width() - 14, itemheight);
-    font[3]->draw(s, dest, x + 2, y + i * itemheight + 1);
+    // Truncate text to fit within listbox width
+    if (font[3]->getwidth(s) > maxpx) {
+      char buf[256];
+      strncpy(buf, s, sizeof(buf) - 1);
+      buf[sizeof(buf) - 1] = 0;
+      int len = (int)strlen(buf);
+      while (len > 0 && font[3]->getwidth(buf) > maxpx)
+        buf[--len] = 0;
+      font[3]->draw(buf, dest, x + 2, y + i * itemheight + 1);
+    } else {
+      font[3]->draw(s, dest, x + 2, y + i * itemheight + 1);
+    }
   }
 }
 
