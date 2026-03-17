@@ -2,6 +2,8 @@
 
 NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL2.
 
+![NESticle running Super Mario Bros.](screenshot.png)
+
 ## Changes from Original
 
 | Component | Original | Replacement |
