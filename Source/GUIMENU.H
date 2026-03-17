@@ -101,5 +101,6 @@ public:
   virtual int domenuitem(menuitem *t);
   virtual char *getname() { return "guipopup"; }
   virtual int release(mouse &m);
+  virtual int drag(mouse &m);
   virtual void draw(char *dest);
 };

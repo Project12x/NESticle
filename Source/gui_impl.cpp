@@ -1437,33 +1437,63 @@ int GUIpopupmenu::domenuitem(menuitem *t) {
   GUI_LOG("popup.domenuitem: text='%s' submenu=%p func=%p",
           t->text ? t->text : "(null)", (void *)t->submenu, (void *)t->func);
   if (t->submenu) {
-    // Open submenu as a new standalone popup, replacing this one
-    extern GUIroot *guiroot;
+    // Open submenu as a child popup (cascading) — keep parent visible
     extern GUIpopupmenu *current_hmenu_popup;
-    extern mouse m;
     int popup_x = x2;
     int popup_y = y1;
-    menu *sub = t->submenu;
-    // Clear capture before self-delete to prevent dangling pointer
-    if (m.capture == this)
-      m.capture = 0;
-    // Delete ourselves first (sets current_hmenu_popup to 0 via destructor)
-    delete this;
-    // Create new popup as the current one
-    current_hmenu_popup = new GUIpopupmenu(guiroot, sub, popup_x, popup_y);
+    // Create sub-popup as child of this popup
+    // (child is auto-deleted when parent is deleted)
+    new GUIpopupmenu(this, t->submenu, popup_x, popup_y);
+    // Track the topmost popup for cleanup
+    current_hmenu_popup = this;
     return 0;
   }
+  // Leaf item — fire the function, then delete the entire popup chain
   int r = GUImenu::domenuitem(t);
-  // Clear capture before self-delete to prevent dangling pointer
   extern mouse m;
   if (m.capture == this)
     m.capture = 0;
-  delete this;
-  return r;
+  // Walk up to the topmost popup and delete it (cascading delete of children)
+  extern GUIpopupmenu *current_hmenu_popup;
+  GUIrect *top = this;
+  while (top->parent && dynamic_cast<GUIpopupmenu *>(top->parent))
+    top = top->parent;
+  if (current_hmenu_popup == top || current_hmenu_popup == this)
+    current_hmenu_popup = 0;
+  delete top;
+  return 0;
+}
+int GUIpopupmenu::drag(mouse &m) {
+  // Check child sub-popups first (cascading)
+  for (GUIrect *c = child; c; c = c->next) {
+    GUIpopupmenu *sub = dynamic_cast<GUIpopupmenu *>(c);
+    if (sub) {
+      int sx, sy;
+      menuitem *mi = sub->menuhittest(m.x, m.y, sx, sy);
+      if (mi) {
+        sub->selmi = mi;
+        selmi = 0; // clear parent selection
+        return 1;
+      } else {
+        sub->selmi = 0;
+      }
+    }
+  }
+  // Check our own items
+  return GUImenu::drag(m);
 }
 int GUIpopupmenu::release(mouse &m) {
   GUI_LOG("popup.release: selmi=%p text='%s'", (void *)selmi,
           selmi && selmi->text ? selmi->text : "(none)");
+  // Check child sub-popups first
+  for (GUIrect *c = child; c; c = c->next) {
+    GUIpopupmenu *sub = dynamic_cast<GUIpopupmenu *>(c);
+    if (sub && sub->selmi) {
+      menuitem *saved = sub->selmi;
+      sub->selmi = 0;
+      return sub->domenuitem(saved);
+    }
+  }
   if (selmi) {
     menuitem *saved = selmi;
     selmi = 0;
