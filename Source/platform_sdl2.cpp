@@ -188,6 +188,12 @@ void toggle_sdl_fullscreen() {
   }
 }
 
+int is_sdl_fullscreen() {
+  if (!sdl_window)
+    return 0;
+  return (SDL_GetWindowFlags(sdl_window) & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 1 : 0;
+}
+
 // ---- Surface class (offscreen rendering) ----
 struct SurfaceData {
   unsigned char *pixels;

@@ -184,10 +184,15 @@ void gametimer() {
   }
 }
 
+extern void toggle_emulator_fullscreen();
 int keyboard() {
-  // if (kbscan==KB_ESC) {quitgame(); return 1;}
+  extern int is_sdl_fullscreen();
   if (kbscan == KB_ESC) {
-    togglegui();
+    if (is_sdl_fullscreen()) {
+      toggle_emulator_fullscreen();
+    } else {
+      togglegui();
+    }
     return 1;
   }
   // When the GUI has a modal widget active (e.g., keyedit learning mode),
