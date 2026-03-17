@@ -491,38 +491,27 @@ char scan2ascii(char s) {
 char *getkeyname(char key) {
   static char name[16];
   int k = key & 0x7F;
-  char c = scan2ascii((char)k);
-  if (c >= 'a' && c <= 'z') {
-    name[0] = c - 32;
-    name[1] = 0;
-    return name;
-  }
-  if (c >= '0' && c <= '9') {
-    name[0] = c;
-    name[1] = 0;
-    return name;
-  }
-  switch (k) {
-  case 0x48:
-    return (char *)"Up";
-  case 0x50:
-    return (char *)"Down";
-  case 0x4B:
-    return (char *)"Left";
-  case 0x4D:
-    return (char *)"Right";
-  case 0x1C:
-    return (char *)"Enter";
-  case 0x01:
-    return (char *)"Escape";
-  case 0x39:
-    return (char *)"Space";
-  case 0x0F:
-    return (char *)"Tab";
-  default:
-    sprintf(name, "Key%02X", k);
-    return name;
-  }
+
+  // Complete DOS scancode to name mapping
+  static const char *dos_names[128] = {
+      0,       "Esc",   "1",    "2",     "3",    "4",    "5",    "6",
+      "7",     "8",     "9",    "0",     "-",    "=",    "BkSp", "Tab",
+      "Q",     "W",     "E",    "R",     "T",    "Y",    "U",    "I",
+      "O",     "P",     "[",    "]",     "Enter","Ctrl", "A",    "S",
+      "D",     "F",     "G",    "H",     "J",    "K",    "L",    ";",
+      "'",     "`",     "Shift","\\",    "Z",    "X",    "C",    "V",
+      "B",     "N",     "M",    ",",     ".",    "/",    "RShft","Num*",
+      "Alt",   "Space", "Caps", "F1",    "F2",   "F3",   "F4",   "F5",
+      "F6",    "F7",    "F8",   "F9",    "F10",  "Num",  "Scrl", "Num7",
+      "Up",    "Num9",  "Num-", "Left",  "Num5", "Right","Num+", "Num1",
+      "Down",  "Num3",  "Num.", 0,       0,      0,      "F11",  "F12",
+  };
+
+  if (k > 0 && k < 88 && dos_names[k])
+    return (char *)dos_names[k];
+
+  sprintf(name, "Key%02X", k);
+  return name;
 }
 
 // ---- Sound ----
