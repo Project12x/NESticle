@@ -764,7 +764,7 @@ GUIonebuttonbox::GUIonebuttonbox(GUIrect *p, char *str, GUIcontents *c,
     : GUIbox(p, str, c, x, y) {
   y2 += 18;
   bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
-  b1 = new GUItextbutton(bar, b1name, (width() - 50) / 2, 2);
+  b1 = new GUItextbutton(bar, b1name, (width() - 50) / 2, height() - 16);
 }
 void GUIonebuttonbox::resize(int xw, int yw) {
   GUIbox::resize(xw, yw);
@@ -772,7 +772,7 @@ void GUIonebuttonbox::resize(int xw, int yw) {
     bar->moveto(0, yw - 18);
     bar->resize(xw, 18);
     if (b1)
-      b1->moveto((xw - b1->width()) / 2, 2);
+      b1->moveto((xw - b1->width()) / 2, yw - 16);
   }
 }
 int GUIonebuttonbox::sendmessage(GUIrect *c, int msg) {
@@ -800,8 +800,8 @@ GUItwobuttonbox::GUItwobuttonbox(GUIrect *p, char *str, GUIcontents *c,
     : GUIbox(p, str, c, x, y) {
   y2 += 18;
   bar = new GUIbar(this, (char)CLR_BOX, 0, height() - 18, width(), 18);
-  b1 = new GUItextbutton(bar, b1name, width() / 4 - 25, 2);
-  b2 = new GUItextbutton(bar, b2name, 3 * width() / 4 - 25, 2);
+  b1 = new GUItextbutton(bar, b1name, width() / 4 - 25, height() - 16);
+  b2 = new GUItextbutton(bar, b2name, 3 * width() / 4 - 25, height() - 16);
 }
 void GUItwobuttonbox::resize(int xw, int yw) {
   GUIbox::resize(xw, yw);
@@ -809,9 +809,9 @@ void GUItwobuttonbox::resize(int xw, int yw) {
     bar->moveto(0, yw - 18);
     bar->resize(xw, 18);
     if (b1)
-      b1->moveto(xw / 4 - b1->width() / 2, 2);
+      b1->moveto(xw / 4 - b1->width() / 2, yw - 16);
     if (b2)
-      b2->moveto(3 * xw / 4 - b2->width() / 2, 2);
+      b2->moveto(3 * xw / 4 - b2->width() / 2, yw - 16);
   }
 }
 int GUItwobuttonbox::sendmessage(GUIrect *c, int msg) {
