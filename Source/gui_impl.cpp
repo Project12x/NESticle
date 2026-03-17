@@ -1,3 +1,8 @@
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wwritable-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+#endif
 // gui_impl.cpp - Reconstructed GUI system implementation for NESticle
 // The original GUI implementation was never included in the source release.
 

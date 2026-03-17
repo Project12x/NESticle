@@ -1,3 +1,8 @@
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wwritable-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+#endif
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>

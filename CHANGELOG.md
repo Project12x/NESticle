@@ -6,7 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Planned
-- GUI Modernization (Resizable frames, button clipping fixes)
+- GUI Modernization (remaining dialogs need 640x480 layout pass)
+
+## [0.4.2] - 2026-03-17
+
+### Fixed
+- **Load button positioning**: Moved from title bar to bottom of dialog (absolute y-coord bug in GUIonebuttonbox/GUItwobuttonbox)
+- **Filename text clipping**: Listbox text truncated to fit within scrollbar bounds using `font->getwidth()`
+- **NES Timing crash**: Guarded `GUIedit::draw` drawrect against negative width when prompt text exceeds edit control width at 640x480 fonts
+- **NES Timing layout**: Widened dialog from 140x80 to 250x80, edit controls from xw=30 to xw=180
+- **About dialog layout**: Widened from 290x65 to 500x90, text pushed to x=140 to clear buddy portrait, proper line spacing
+- **Maximize button icon**: Now uses `guivol.wmmark` image resource
+- **Escape from fullscreen**: Added keyhit handler to GUImaximizebox for Escape key restore
+- **ROM loader width**: Increased content from 140px to 280px
 
 ## [0.4.1] - 2026-03-09
 
