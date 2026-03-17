@@ -141,12 +141,12 @@ class redefinekeys : public GUIcontents {
   keymap &km;
 
 public:
-  redefinekeys(keymap &tkm) : GUIcontents(220, 150), km(tkm) {
+  redefinekeys(keymap &tkm) : GUIcontents(280, 150), km(tkm) {
     for (int i = 0; i <= 11; i++) {
       char s[30];
       strcpy(s, mapnames[i]);
       strcat(s, ": ");
-      new keyedit(this, s, width() - 5, i * 12 + 3, ((char *)&km)[i]);
+      new keyedit(this, s, 100, i * 12 + 3, ((char *)&km)[i]);
     }
   };
 
