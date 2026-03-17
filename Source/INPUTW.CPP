@@ -249,7 +249,7 @@ protected:
 
 public:
   changeinputdevice(int num, INPUTPTR &tin)
-      : GUIcontents(280, 145), in(tin), inputnum(num) {
+      : GUIcontents(280, 170), in(tin), inputnum(num) {
     fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num, (void *)in);
     fflush(stderr);
 
@@ -286,11 +286,11 @@ public:
     // Create initial buttons for the current device
     if (in) {
       if (in->getjoythreshold())
-        edit = new GUItextbutton(this, "Calibrate...", 60, 90);
+        edit = new GUItextbutton(this, "Calibrate...", 5, 130);
       else if (in->getkeymap())
-        edit = new GUItextbutton(this, "Redefine keys...", 60, 90);
+        edit = new GUItextbutton(this, "Redefine keys...", 5, 130);
     }
-    save = new GUItextbutton(this, "Save settings", 60, 105);
+    save = new GUItextbutton(this, "Save settings", 5, 145);
   }
 
   void changedevice(int listIdx) {
@@ -379,12 +379,12 @@ public:
       }
       if (in) {
         if (in->getjoythreshold())
-          edit = new GUItextbutton(this, "Calibrate...", 60, 90);
+          edit = new GUItextbutton(this, "Calibrate...", 5, 130);
         else if (in->getkeymap())
-          edit = new GUItextbutton(this, "Redefine keys...", 60, 90);
+          edit = new GUItextbutton(this, "Redefine keys...", 5, 130);
       }
       // if (edit)
-      save = new GUItextbutton(this, "Save settings", 60, 105);
+      save = new GUItextbutton(this, "Save settings", 5, 145);
     }
     return 1;
   };
