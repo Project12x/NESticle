@@ -1442,26 +1442,12 @@ int GUIpopupmenu::domenuitem(menuitem *t) {
     int popup_x = x2;
     int popup_y = y1;
     // Create sub-popup as child of this popup
-    // (child is auto-deleted when parent is deleted)
     new GUIpopupmenu(this, t->submenu, popup_x, popup_y);
-    // Track the topmost popup for cleanup
     current_hmenu_popup = this;
     return 0;
   }
-  // Leaf item — fire the function, then delete the entire popup chain
-  int r = GUImenu::domenuitem(t);
-  extern mouse m;
-  if (m.capture == this)
-    m.capture = 0;
-  // Walk up to the topmost popup and delete it (cascading delete of children)
-  extern GUIpopupmenu *current_hmenu_popup;
-  GUIrect *top = this;
-  while (top->parent && dynamic_cast<GUIpopupmenu *>(top->parent))
-    top = top->parent;
-  if (current_hmenu_popup == top || current_hmenu_popup == this)
-    current_hmenu_popup = 0;
-  delete top;
-  return 0;
+  // Leaf item — just fire the function (caller handles cleanup)
+  return GUImenu::domenuitem(t);
 }
 int GUIpopupmenu::drag(mouse &m) {
   // Check child sub-popups first (cascading)
@@ -1482,22 +1468,47 @@ int GUIpopupmenu::drag(mouse &m) {
   // Check our own items
   return GUImenu::drag(m);
 }
+
+// Helper: delete entire popup chain from topmost parent
+static void destroy_popup_chain(GUIpopupmenu *popup) {
+  extern GUIpopupmenu *current_hmenu_popup;
+  extern mouse m;
+  GUIrect *top = popup;
+  while (top->parent && dynamic_cast<GUIpopupmenu *>(top->parent))
+    top = top->parent;
+  if (m.capture == popup || m.capture == top)
+    m.capture = 0;
+  if (current_hmenu_popup == top || current_hmenu_popup == popup)
+    current_hmenu_popup = 0;
+  delete top;
+}
+
 int GUIpopupmenu::release(mouse &m) {
   GUI_LOG("popup.release: selmi=%p text='%s'", (void *)selmi,
           selmi && selmi->text ? selmi->text : "(none)");
-  // Check child sub-popups first
+  // Check child sub-popups first for selected items
   for (GUIrect *c = child; c; c = c->next) {
     GUIpopupmenu *sub = dynamic_cast<GUIpopupmenu *>(c);
     if (sub && sub->selmi) {
       menuitem *saved = sub->selmi;
       sub->selmi = 0;
-      return sub->domenuitem(saved);
+      int r = sub->domenuitem(saved);
+      if (r) {
+        // Leaf item was fired — clean up entire chain from 'this' (safe)
+        destroy_popup_chain(this);
+      }
+      return 0;
     }
   }
   if (selmi) {
     menuitem *saved = selmi;
     selmi = 0;
-    return domenuitem(saved);
+    int r = domenuitem(saved);
+    if (r) {
+      // Leaf item was fired — clean up entire chain from 'this' (safe)
+      destroy_popup_chain(this);
+    }
+    return 0;
   }
   // No item selected — release capture but keep popup for click-to-select
   return 1;

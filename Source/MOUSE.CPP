@@ -1,5 +1,6 @@
 #include "gui.h"
 #include "mouse.h"
+#include "guimenu.h"
 
 #include "guivol.h"
 #include "message.h"
@@ -42,6 +43,23 @@ void mouse::updatebut(int newb) {
       GUIrect::modal->click(*this);
     } else if (!capture) // not captured
     {
+      // Close any open popup menu if clicking outside it
+      extern GUIpopupmenu *current_hmenu_popup;
+      if (current_hmenu_popup) {
+        GUIrect *hit = root->hittest(x, y);
+        // Check if click is on the popup or any child of it
+        int on_popup = 0;
+        for (GUIrect *r = hit; r; r = r->parent) {
+          if (r == current_hmenu_popup) {
+            on_popup = 1;
+            break;
+          }
+        }
+        if (!on_popup) {
+          delete current_hmenu_popup;
+          current_hmenu_popup = 0;
+        }
+      }
       capture = root->hittest(x, y);
       if (capture) {
         capture = capture->click(*this);
