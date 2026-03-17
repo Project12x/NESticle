@@ -259,6 +259,9 @@ void updatescreen() {
 
   if (guienabled) {
     pf.gui_timer.enter();
+    // Fill desktop with classic NESticle bluish color (palette 9*16+14=158)
+    if (!cfg->get(CFG_NOFILLEDDESKTOP))
+      memset(screen, 9 * 16 + 14, SCREENX * SCREENY);
     // draw everything
     root->draw(screen);
     // Cursor drawn as ARGB overlay in platform_sdl2.cpp after NN scale

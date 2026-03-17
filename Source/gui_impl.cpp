@@ -1410,12 +1410,11 @@ GUIrect *GUIhmenu::click(mouse &m) {
 }
 
 int GUIhmenu::release(mouse &m) {
-  // Close any open popup when releasing on the menu bar
+  // If a popup is open, leave it open for user interaction.
+  // The popup will close itself when user selects an item or clicks outside.
   if (current_hmenu_popup) {
-    if (m.capture == current_hmenu_popup)
-      m.capture = 0;
-    delete current_hmenu_popup;
-    current_hmenu_popup = 0;
+    selmi = 0;
+    return 1;
   }
   if (selmi && selmi->func) {
     selmi->menufunc();
