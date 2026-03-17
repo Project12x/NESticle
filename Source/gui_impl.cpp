@@ -742,6 +742,7 @@ void GUImaximizebox::restore() {
   moveto(save_x1, save_y1);
   resize(save_w, save_h);
   if (contents) {
+    contents->moveto(x1 + 2, y1 + 14);
     contents->resize(save_w - 4, save_h - 16);
     contents->restore();
   }
