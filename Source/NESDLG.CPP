@@ -493,12 +493,12 @@ public:
     vfps->set(TIMERSPEED);
   }
 
-  nestimingdlg() : GUIcontents(140, 80) {
-    hblank = new GUIintedit(this, "HBlank cycles: ", 5, 5, 30, HBLANKCYCLES, 10,
+  nestimingdlg() : GUIcontents(250, 80) {
+    hblank = new GUIintedit(this, "HBlank cycles: ", 5, 5, 180, HBLANKCYCLES, 10,
                             999);
     vblank =
-        new GUIintedit(this, "VBlank lines: ", 5, 23, 30, VBLANKLINES, 1, 999);
-    vfps = new GUIintedit(this, "Virtual FPS: ", 5, 41, 30, TIMERSPEED, 1, 999);
+        new GUIintedit(this, "VBlank lines: ", 5, 23, 180, VBLANKLINES, 1, 999);
+    vfps = new GUIintedit(this, "Virtual FPS: ", 5, 41, 180, TIMERSPEED, 1, 999);
     new GUIstatictext(this, 3, "6502 Mhz: ", 30, 60);
 
     hblank->moverel((x2 - 10) - hblank->x2, 0);
