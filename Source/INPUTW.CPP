@@ -284,13 +284,23 @@ public:
     }
 
     // Create initial buttons for the current device
-    if (in) {
-      if (in->getjoythreshold())
-        edit = new GUItextbutton(this, "Calibrate...", 5, 130);
-      else if (in->getkeymap())
-        edit = new GUItextbutton(this, "Redefine keys...", 5, 130);
-    }
+    edit = new GUItextbutton(this, " ", 5, 130);
     save = new GUItextbutton(this, "Save settings", 5, 145);
+    updateEditButton();
+  }
+
+  void updateEditButton() {
+    if (!edit) return;
+    if (in && in->getjoythreshold()) {
+      edit->settext("Calibrate...");
+      edit->moveto(x1 + 5, y1 + 130);
+    } else if (in && in->getkeymap()) {
+      edit->settext("Redefine keys...");
+      edit->moveto(x1 + 5, y1 + 130);
+    } else {
+      // Hide the edit button by moving it offscreen
+      edit->moveto(-200, -200);
+    }
   }
 
   void changedevice(int listIdx) {
@@ -369,22 +379,7 @@ public:
           b[i]->setinput(in);
       }
 
-      if (edit) {
-        delete edit;
-        edit = 0;
-      }
-      if (save) {
-        delete save;
-        save = 0;
-      }
-      if (in) {
-        if (in->getjoythreshold())
-          edit = new GUItextbutton(this, "Calibrate...", 5, 130);
-        else if (in->getkeymap())
-          edit = new GUItextbutton(this, "Redefine keys...", 5, 130);
-      }
-      // if (edit)
-      save = new GUItextbutton(this, "Save settings", 5, 145);
+      updateEditButton();
     }
     return 1;
   };
