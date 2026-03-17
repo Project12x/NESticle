@@ -1,3 +1,8 @@
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wwritable-strings"
+#elif defined(__GNUC__)
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+#endif
 // allows for changing of input devices
 #include <stdio.h>
 #include <stdlib.h>
@@ -136,7 +141,7 @@ class redefinekeys : public GUIcontents {
   keymap &km;
 
 public:
-  redefinekeys(keymap &tkm) : GUIcontents(150, 150), km(tkm) {
+  redefinekeys(keymap &tkm) : GUIcontents(220, 150), km(tkm) {
     for (int i = 0; i <= 11; i++) {
       char s[30];
       strcpy(s, mapnames[i]);
@@ -244,7 +249,7 @@ protected:
 
 public:
   changeinputdevice(int num, INPUTPTR &tin)
-      : GUIcontents(220, 135), in(tin), inputnum(num) {
+      : GUIcontents(280, 145), in(tin), inputnum(num) {
     fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num, (void *)in);
     fflush(stderr);
 

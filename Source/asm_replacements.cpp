@@ -304,6 +304,8 @@ void __cdecl drawscr(char *s, char *d, int xw, int yw, int pitch) {
 
 // Filled rectangle - C++ linkage (declared in R2IMG.H under #ifdef WIN95)
 void drawrect(char *d, int color, int x, int y, int xw, int yw) {
+  if (xw <= 0 || yw <= 0)
+    return;
   int x1 = (x >= 0) ? x : 0;
   int y1 = (y >= 0) ? y : 0;
   int x2 = x + xw;
@@ -312,6 +314,8 @@ void drawrect(char *d, int color, int x, int y, int xw, int yw) {
   int y2 = y + yw;
   if (y2 > SCREENY)
     y2 = SCREENY;
+  if (x1 >= x2 || y1 >= y2)
+    return;
   for (int row = y1; row < y2; row++)
     memset(d + row * PITCH + x1, (unsigned char)color, x2 - x1);
 }
