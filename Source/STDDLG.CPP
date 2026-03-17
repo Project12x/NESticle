@@ -169,7 +169,7 @@ extern int buildcompilerversionhigh, buildcompilerversionlow;
 extern float version; // game version
 class aboutdlg : public GUIcontents {
 public:
-  aboutdlg() : GUIcontents(290, 65) {
+  aboutdlg() : GUIcontents(420, 90) {
     char s[80];
 
     new GUIstaticimage(this, guivol.about, 5, 5);
@@ -183,16 +183,17 @@ public:
 #endif
     );
 
-    new GUIstatictext(this, 3, s, 70, 20);
+    new GUIstatictext(this, 3, s, 70, 25);
 
     sprintf(s, "V%d.%02d", (unsigned)version,
             ((unsigned)(version * 100)) % 100);
-    new GUIstatictext(this, 5, s, 250, 20);
+    new GUIstatictext(this, 5, s, 350, 25);
 
-    new GUIstatictext(this, 3, "Copyright (C) 1997 Bloodlust Software", 70, 50);
     sprintf(s, "%s %d.%d %s %s", buildcompiler, buildcompilerversionhigh,
             buildcompilerversionlow, builddate, buildtime);
-    new GUIstatictext(this, 3, s, 70, 30);
+    new GUIstatictext(this, 3, s, 70, 40);
+
+    new GUIstatictext(this, 3, "Copyright (C) 1997 Bloodlust Software", 70, 60);
   }
 
   virtual int sendmessage(GUIrect *c, int guimsg) { return 1; };
