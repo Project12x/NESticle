@@ -458,6 +458,11 @@ void nessound::mix16(short *b, int nums) {
       else
         memset(ch[i]->rawbuf, 0, nums * sizeof(short));
 
+    // DC blocking high-pass filter state (persists across calls)
+    static float dc_prev_in = 0.0f;
+    static float dc_prev_out = 0.0f;
+    static const float dc_alpha = 0.995f; // ~7 Hz cutoff at 22050 Hz
+
     for (int i = 0; i < nums; i++) {
       // Pulse DAC: pulse_out = 95.88 / (8128/(p1+p2) + 100)
       int p = ch[0]->rawbuf[i] + ch[1]->rawbuf[i];
@@ -470,9 +475,17 @@ void nessound::mix16(short *b, int nums) {
       if (ch[4]->rawbuf[i]) tnd_sum += ch[4]->rawbuf[i] / 22638.0f;
       float tnd_out = tnd_sum > 0 ? 159.79f / (1.0f / tnd_sum + 100.0f) : 0;
 
-      // Combined NES output is [0, ~1.0], center and scale to 16-bit
+      // Combined NES DAC output [0, ~1.0]
       float combined = pulse_out + tnd_out;
-      int sample = (int)((combined - 0.5f) * 50000.0f);
+
+      // DC blocking filter: removes constant offset, keeps audio
+      // y[n] = x[n] - x[n-1] + alpha * y[n-1]
+      float filtered = combined - dc_prev_in + dc_alpha * dc_prev_out;
+      dc_prev_in = combined;
+      dc_prev_out = filtered;
+
+      // Scale to 16-bit (~80% of range)
+      int sample = (int)(filtered * 26000.0f);
       if (sample > 32767) sample = 32767;
       if (sample < -32768) sample = -32768;
       b[i] = (short)sample;
