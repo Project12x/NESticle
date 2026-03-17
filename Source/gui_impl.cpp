@@ -748,11 +748,16 @@ GUIrect *GUImaximizebox::hittest(int x, int y) {
   return GUIrect::hittest(x, y);
 }
 int GUImaximizebox::sendmessage(GUIrect *c, int msg) {
+  extern void enablegui();
+  extern void disablegui();
   if (c == (GUIrect *)max && msg == GUIMSG_PUSHED) {
-    if (maximized)
+    if (maximized) {
+      enablegui();
       restore();
-    else
+    } else {
+      disablegui();
       maximize();
+    }
     return 1;
   }
   return GUIbox::sendmessage(c, msg);
