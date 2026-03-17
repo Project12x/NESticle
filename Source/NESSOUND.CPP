@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "message.h"
@@ -413,6 +414,9 @@ nessound::nessound() {
   ch[4] = new dmcwave;
   init_tables();
   clearprimary();
+  fprintf(stderr, "[SOUND] Mixer mode: %s\n",
+          nonlinear_mixing ? "NES hardware nonlinear" : "original linear");
+  fflush(stderr);
 }
 
 void nessound::init_tables() {
