@@ -245,6 +245,11 @@ void neschannel::stopnote() { noteon = 0; }
 void neschannel::reset() {
   r[0] = r[1] = r[2] = r[3] = 0;
   deltaK = 0;
+  vol = 0;
+  raw_vol = 0;
+  count = 0;
+  K = 0;
+  freq = 0;
   stopnote();
   enabled = 0;
 }
