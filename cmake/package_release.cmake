@@ -10,6 +10,8 @@ set(required_source_files
   "${SOURCE_DIR}/gui.vol"
   "${SOURCE_DIR}/NESticle.pal"
   "${SOURCE_DIR}/README.md"
+  "${SOURCE_DIR}/docs/verification.md"
+  "${SOURCE_DIR}/docs/save-states.md"
   "${SOURCE_DIR}/LICENSE"
   "${SOURCE_DIR}/external/SDL3-3.4.10/LICENSE.txt"
   "${SOURCE_DIR}/external/SDL3-3.4.10-PROVENANCE.md"
@@ -30,6 +32,9 @@ file(COPY_FILE "${SDL3_DLL}" "${PACKAGE_DIR}/SDL3.dll" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/gui.vol" "${PACKAGE_DIR}/gui.vol" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/NESticle.pal" "${PACKAGE_DIR}/NESticle.pal" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/README.md" "${PACKAGE_DIR}/README.md" ONLY_IF_DIFFERENT)
+file(MAKE_DIRECTORY "${PACKAGE_DIR}/docs")
+file(COPY_FILE "${SOURCE_DIR}/docs/verification.md" "${PACKAGE_DIR}/docs/verification.md" ONLY_IF_DIFFERENT)
+file(COPY_FILE "${SOURCE_DIR}/docs/save-states.md" "${PACKAGE_DIR}/docs/save-states.md" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/LICENSE" "${PACKAGE_DIR}/LICENSE" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/external/SDL3-3.4.10/LICENSE.txt" "${PACKAGE_DIR}/SDL3-LICENSE.txt" ONLY_IF_DIFFERENT)
 file(COPY_FILE "${SOURCE_DIR}/external/SDL3-3.4.10-PROVENANCE.md" "${PACKAGE_DIR}/SDL3-PROVENANCE.md" ONLY_IF_DIFFERENT)
@@ -87,6 +92,8 @@ else()
       "gui.vol"
       "NESticle.pal"
       "README.md"
+      "docs/verification.md"
+      "docs/save-states.md"
       "LICENSE"
       "SDL3-LICENSE.txt"
       "SDL3-PROVENANCE.md"

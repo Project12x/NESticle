@@ -13,6 +13,8 @@ Use this checklist before tagging or sharing a release package. Do not commit or
   - `gui.vol`
   - `NESticle.pal`
   - `README.md`
+  - `docs/verification.md`
+  - `docs/save-states.md`
   - `LICENSE`
   - `SDL3-LICENSE.txt`
   - `SDL3-PROVENANCE.md`

@@ -24,7 +24,7 @@ cmake --build build-sdl3 --config Release
 cmake --build build-sdl3 --config Release --target package_release
 ```
 
-The package target creates `releases/NESticle-sdl3-Release.zip` with `NESticle.exe`, `SDL3.dll`, `gui.vol`, `NESticle.pal`, `README.md`, `LICENSE`, and third-party license/provenance notes.
+The package target creates `releases/NESticle-sdl3-Release.zip` with `NESticle.exe`, `SDL3.dll`, `gui.vol`, `NESticle.pal`, `README.md`, verification docs, `LICENSE`, and third-party license/provenance notes.
 
 ## Run
 

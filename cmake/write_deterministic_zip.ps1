@@ -14,6 +14,8 @@ $entries = @(
   "gui.vol",
   "NESticle.pal",
   "README.md",
+  "docs/verification.md",
+  "docs/save-states.md",
   "LICENSE",
   "SDL3-LICENSE.txt",
   "SDL3-PROVENANCE.md",
