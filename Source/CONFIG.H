@@ -3,8 +3,9 @@
 #define CONFIG_H
 
 #include "input.h"
+#include "config_format.h"
 
-#define CONFIGVERSION 0x101
+#define CONFIGVERSION NESTICLE_CONFIG_VERSION
 
 #define CFG_NOSOUND 0
 #define CFG_SB      1

@@ -78,10 +78,10 @@ int config::load(char *file)
  if (f.open(file)) return 0;
 
  unsigned bytes=f.size();
- if (bytes<sizeof(int))
+ if (!nesticle_config_size_supported(bytes,sizeof(config)))
   {
    f.close();
-   msg.error("Config file %s is too short; using defaults",file);
+   msg.error("Config file %s has unsupported size; using defaults",file);
    return 0;
   }
 
@@ -94,6 +94,12 @@ int config::load(char *file)
    return 0;
   }
  f.close();
+
+ if (!nesticle_config_version_supported(loaded.version))
+  {
+   msg.error("Config file %s has unsupported version; using defaults",file);
+   return 0;
+  }
 
  normalizeconfig(loaded);
  memcpy(this,&loaded,sizeof(config));

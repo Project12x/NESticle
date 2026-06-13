@@ -57,6 +57,7 @@ set(NESTICLE_SOURCES
     Source/PROF.CPP
     Source/SNAPSHOT.CPP
     Source/DISASM.CPP
+    Source/config_format.cpp
     Source/save_state_format.cpp
 )
 
@@ -93,6 +94,17 @@ target_include_directories(save_state_format_tests PRIVATE
 )
 
 add_test(NAME save_state_format_tests COMMAND save_state_format_tests)
+
+add_executable(config_format_tests
+    Source/config_format.cpp
+    tests/config_format_tests.cpp
+)
+
+target_include_directories(config_format_tests PRIVATE
+    Source
+)
+
+add_test(NAME config_format_tests COMMAND config_format_tests)
 
 # On Windows, link with WinMM for timeGetTime compatibility stubs
 if(WIN32)

@@ -96,10 +96,11 @@ Use `docs/verification.md` before tagging or sharing a release package.
 
 ## Lightweight Regression Tests
 
-The SDL3 branch includes a small CMake regression harness for host-side save-state format checks:
+The SDL3 branch includes small CMake regression harnesses for host-side persistence checks:
 
 ```powershell
 cmake --build build-sdl3 --config Debug --target save_state_format_tests
+cmake --build build-sdl3 --config Debug --target config_format_tests
 ctest --test-dir build-sdl3 -C Debug --output-on-failure
 ```
 

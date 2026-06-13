@@ -35,6 +35,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Image/font file hardening**: Bitmap and font helpers now fail cleanly on missing, unreadable, or unwritable files instead of dereferencing null or ignoring write failures.
 - **Palette load hardening**: Short or unreadable palette files no longer partially overwrite the built-in fallback palette.
 - **Save-state validation tests**: Added a small CMake regression harness for state header validation and safe `.sta` filename construction.
+- **Config format validation tests**: Added CMake coverage for config version and file-size gates before loading settings blobs.
 
 ## [0.5.0] - 2026-03-17
 
