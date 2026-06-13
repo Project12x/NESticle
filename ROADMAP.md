@@ -106,7 +106,7 @@
 ## Phase 17: Packaging & Verification [PLANNED]
 - [x] Add deterministic package output with executable, SDL3 DLL, assets, docs, and license notes
 - [x] Add a manual verification checklist for ROMs, input, audio, fullscreen, config, and state files
-- [ ] Verify launch from both project root and packaged release directory
+- [x] Verify launch from both project root and packaged release directory
 
 ## Phase 18: Developer Diagnostics [PLANNED]
 - [ ] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
