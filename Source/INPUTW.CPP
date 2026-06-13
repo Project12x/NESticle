@@ -24,14 +24,14 @@
 // input device settings.
 extern inputdevicesettings *ids;
 
-#ifdef SDL2
-#include <SDL.h>
+#ifdef SDL3
+#include <SDL3/SDL.h>
 #endif
 
 // Dynamic device list entry: maps list index to device type + controller index
 struct deviceentry {
   int type;      // ID_NONE, ID_KEY1, ID_KEY2, ID_GAMEPAD1, etc.
-  int sdlIndex;  // SDL joystick index (for gamepads)
+  int sdlIndex;  // SDL gamepad slot (for gamepads)
   char name[64]; // Display name
 };
 
@@ -49,19 +49,22 @@ static void enumerateDevices() {
   devices[numdevices] = {ID_KEY2, -1, "Keyboard 2"};
   numdevices++;
 
-#ifdef SDL2
-  // Enumerate connected SDL GameControllers
-  for (int i = 0; i < SDL_NumJoysticks() && numdevices < MAX_DEVICES; i++) {
-    if (SDL_IsGameController(i)) {
-      const char *cname = SDL_GameControllerNameForIndex(i);
+#ifdef SDL3
+  // Enumerate connected SDL Gamepads.
+  int count = 0;
+  SDL_JoystickID *gamepads = SDL_GetGamepads(&count);
+  if (gamepads) {
+    for (int i = 0; i < count && numdevices < MAX_DEVICES; i++) {
+      const char *cname = SDL_GetGamepadNameForID(gamepads[i]);
       devices[numdevices].type = ID_GAMEPAD1;
       devices[numdevices].sdlIndex = i;
       if (cname)
         snprintf(devices[numdevices].name, 64, "%s", cname);
       else
-        snprintf(devices[numdevices].name, 64, "Controller %d", i);
+        snprintf(devices[numdevices].name, 64, "Gamepad %d", i + 1);
       numdevices++;
     }
+    SDL_free(gamepads);
   }
 #endif
 
@@ -172,25 +175,25 @@ public:
 };
 DLGPOS redefinekeys::pos;
 
-#ifdef SDL2
+#ifdef SDL3
 // SDL button name lookup
 static const char *getSDLButtonName(int btn) {
-  switch (btn) {
-  case SDL_CONTROLLER_BUTTON_A: return "A";
-  case SDL_CONTROLLER_BUTTON_B: return "B";
-  case SDL_CONTROLLER_BUTTON_X: return "X";
-  case SDL_CONTROLLER_BUTTON_Y: return "Y";
-  case SDL_CONTROLLER_BUTTON_BACK: return "Back";
-  case SDL_CONTROLLER_BUTTON_GUIDE: return "Guide";
-  case SDL_CONTROLLER_BUTTON_START: return "Start";
-  case SDL_CONTROLLER_BUTTON_LEFTSTICK: return "L-Stick";
-  case SDL_CONTROLLER_BUTTON_RIGHTSTICK: return "R-Stick";
-  case SDL_CONTROLLER_BUTTON_LEFTSHOULDER: return "LB";
-  case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: return "RB";
-  case SDL_CONTROLLER_BUTTON_DPAD_UP: return "D-Up";
-  case SDL_CONTROLLER_BUTTON_DPAD_DOWN: return "D-Down";
-  case SDL_CONTROLLER_BUTTON_DPAD_LEFT: return "D-Left";
-  case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: return "D-Right";
+  switch ((SDL_GamepadButton)btn) {
+  case SDL_GAMEPAD_BUTTON_SOUTH: return "South";
+  case SDL_GAMEPAD_BUTTON_EAST: return "East";
+  case SDL_GAMEPAD_BUTTON_WEST: return "West";
+  case SDL_GAMEPAD_BUTTON_NORTH: return "North";
+  case SDL_GAMEPAD_BUTTON_BACK: return "Back";
+  case SDL_GAMEPAD_BUTTON_GUIDE: return "Guide";
+  case SDL_GAMEPAD_BUTTON_START: return "Start";
+  case SDL_GAMEPAD_BUTTON_LEFT_STICK: return "LStick";
+  case SDL_GAMEPAD_BUTTON_RIGHT_STICK: return "RStick";
+  case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER: return "LShoulder";
+  case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER: return "RShoulder";
+  case SDL_GAMEPAD_BUTTON_DPAD_UP: return "D-Up";
+  case SDL_GAMEPAD_BUTTON_DPAD_DOWN: return "D-Down";
+  case SDL_GAMEPAD_BUTTON_DPAD_LEFT: return "D-Left";
+  case SDL_GAMEPAD_BUTTON_DPAD_RIGHT: return "D-Right";
   default: return "???";
   }
 }
@@ -228,22 +231,28 @@ public:
   virtual void drawdata(char *dest, int x, int y, int xw) {
     // Poll gamepad buttons every frame when in modal (waiting for input)
     if (modal == this) {
-      SDL_GameControllerUpdate();
-      for (int ji = 0; ji < SDL_NumJoysticks(); ji++) {
-        if (!SDL_IsGameController(ji)) continue;
-        SDL_GameController *gc = SDL_GameControllerOpen(ji);
-        if (!gc) continue;
-        for (int b = SDL_CONTROLLER_BUTTON_A;
-             b <= SDL_CONTROLLER_BUTTON_DPAD_RIGHT; b++) {
-          if (SDL_GameControllerGetButton(gc, (SDL_GameControllerButton)b)) {
-            buttonRef = b;
-            setmodal(0);
-            parent->cyclefocus(0);
-            SDL_GameControllerClose(gc);
-            goto done_polling;
+      SDL_UpdateGamepads();
+      int count = 0;
+      SDL_JoystickID *gamepads = SDL_GetGamepads(&count);
+      if (gamepads) {
+        for (int i = 0; i < count; i++) {
+          SDL_Gamepad *gp = SDL_OpenGamepad(gamepads[i]);
+          if (!gp)
+            continue;
+          for (int b = SDL_GAMEPAD_BUTTON_SOUTH;
+               b <= SDL_GAMEPAD_BUTTON_DPAD_RIGHT; b++) {
+            if (SDL_GetGamepadButton(gp, (SDL_GamepadButton)b)) {
+              buttonRef = b;
+              setmodal(0);
+              parent->cyclefocus(0);
+              SDL_CloseGamepad(gp);
+              SDL_free(gamepads);
+              goto done_polling;
+            }
           }
+          SDL_CloseGamepad(gp);
         }
-        SDL_GameControllerClose(gc);
+        SDL_free(gamepads);
       }
     done_polling:;
       if (modal == this && (uu & 16))
@@ -423,7 +432,7 @@ public:
     } else if (in && in->getkeymap()) {
       edit->settext("Redefine keys...");
       edit->moveto(x1 + 5, y1 + 130);
-#ifdef SDL2
+#ifdef SDL3
     } else if (in && in->getpadmap()) {
       edit->settext("Redefine buttons...");
       edit->moveto(x1 + 5, y1 + 130);
@@ -479,7 +488,7 @@ public:
           if (in->getkeymap()) {
             redefinekeys::open(in->getkeymap());
           }
-#ifdef SDL2
+#ifdef SDL3
           else if (in->getpadmap()) {
             redefinepad::open(in->getpadmap(), in);
           }
