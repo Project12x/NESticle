@@ -627,6 +627,48 @@ int random(int x) {
 // ddrawinfo stub
 void ddrawinfo() {}
 
+static int get_regular_file_size(const char *path, long *size_out) {
+  FILE *f = fopen(path, "rb");
+  if (!f)
+    return 0;
+  if (fseek(f, 0, SEEK_END) != 0) {
+    fclose(f);
+    return 0;
+  }
+  long size = ftell(f);
+  fclose(f);
+  if (size < 0)
+    return 0;
+  *size_out = size;
+  return 1;
+}
+
+static int fail_startup_asset(SDL_Window *window, const char *message) {
+  fprintf(stderr, "[ASSET] %s\n", message);
+  fflush(stderr);
+  SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "NESticle", message, window);
+  return 1;
+}
+
+static int validate_startup_assets(SDL_Window *window) {
+  long size = 0;
+  if (!get_regular_file_size("gui.vol", &size))
+    return fail_startup_asset(
+        window, "Missing gui.vol. Run NESticle from its release directory.");
+  if (size <= 0)
+    return fail_startup_asset(window, "gui.vol is empty or unreadable.");
+
+  if (!get_regular_file_size("NESticle.pal", &size))
+    return fail_startup_asset(
+        window,
+        "Missing NESticle.pal. Run NESticle from its release directory.");
+  if (size != 256 * 3)
+    return fail_startup_asset(window,
+                              "NESticle.pal is corrupt or the wrong size.");
+
+  return 0;
+}
+
 // ---- MAIN ----
 int main(int argc, char *argv[]) {
 #ifdef _WIN32
@@ -685,6 +727,13 @@ int main(int argc, char *argv[]) {
   // Let SDL handle scaling/letterboxing to any window/fullscreen size
   SDL_SetRenderLogicalPresentation(sdl_renderer, SCREENX, SCREENY,
                                    SDL_LOGICAL_PRESENTATION_LETTERBOX);
+
+  if (validate_startup_assets(sdl_window)) {
+    SDL_DestroyRenderer(sdl_renderer);
+    SDL_DestroyWindow(sdl_window);
+    SDL_Quit();
+    return 1;
+  }
 
   // Allocate 8-bit indexed screen buffer
   PITCH = SCREENX;

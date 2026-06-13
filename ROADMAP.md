@@ -67,7 +67,7 @@
 - [x] Update CMake and runtime DLL copy rules for vendored SDL3
 
 ## Phase 11: Reliability Hardening [PLANNED]
-- [ ] Harden startup asset checks and failure messages
+- [x] Harden startup asset checks and failure messages
 - [ ] Fix shutdown order, resource leaks, and null/lifetime hazards
 - [ ] Improve GUI focus/click edge cases without changing visual style
 - [ ] Harden fullscreen transitions and bad-path handling
