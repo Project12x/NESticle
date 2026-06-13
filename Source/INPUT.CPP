@@ -21,6 +21,7 @@ int __cdecl ReadAnalogJoyButtons();
 #endif
 
 #include "dd.h"
+#include "devlog.h"
 #include "input.h"
 
 // #include "object.h"
@@ -321,10 +322,12 @@ public:
     pmptr = &ids->pm[pmidx];
     pm = *pmptr;
     controller = open_gamepad_slot(joystickSlot, &joystickId);
-    fprintf(stderr,
-            "[INPUT] sdlgamepad created: slot=%d id=%u controller=%p\n",
-            joystickSlot, (unsigned)joystickId, (void *)controller);
-    fflush(stderr);
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr,
+              "[INPUT] sdlgamepad created: slot=%d id=%u controller=%p\n",
+              joystickSlot, (unsigned)joystickId, (void *)controller);
+      fflush(stderr);
+    }
   }
 
   virtual ~sdlgamepad() {

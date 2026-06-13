@@ -65,6 +65,7 @@ void gametimer();
 // ---- Globals matching DD.H ----
 extern "C" int PITCH = 0;
 extern "C" int BANKED = 0;
+extern "C" int nesticle_developer_diagnostics = 0;
 char *video = nullptr;
 char *screen = nullptr;
 char errstr[80] = {0};
@@ -81,7 +82,6 @@ static int ActiveApp = 1;
 
 // Globals
 static int sdl_scale = 2; // DPI scale factor (auto-detected)
-static int developer_diagnostics = 0;
 static SDL_Window *sdl_window = nullptr;
 static SDL_Renderer *sdl_renderer = nullptr;
 static SDL_Texture *sdl_texture = nullptr;
@@ -117,7 +117,7 @@ void enable() { timerdisabled = 0; }
 void quitgame() { ActiveApp = 0; }
 
 static void shutdown_sdl_platform() {
-  if (developer_diagnostics) {
+  if (nesticle_developer_diagnostics) {
     fprintf(stderr,
             "[DIAG] audio underruns: callbacks=%u samples=%u, overruns=%u, "
             "frame_skip_ticks=%u\n",
@@ -767,14 +767,16 @@ int main(int argc, char *argv[]) {
       i++;
     } else if (!strcmp(argv[i], "--dev-log") ||
                !strcmp(argv[i], "--diagnostics")) {
-      developer_diagnostics = 1;
+      nesticle_developer_diagnostics = 1;
     } else if (!rom_arg) {
       rom_arg = argv[i];
     }
   }
-  fprintf(stderr, "[DPI] scale=%dx (display scale=%.2f)\n", sdl_scale,
-          display_scale);
-  fflush(stderr);
+  if (nesticle_developer_diagnostics) {
+    fprintf(stderr, "[DPI] scale=%dx (display scale=%.2f)\n", sdl_scale,
+            display_scale);
+    fflush(stderr);
+  }
 
   sdl_window =
       SDL_CreateWindow("NESticle", 640 * sdl_scale, 480 * sdl_scale,
@@ -833,7 +835,7 @@ int main(int argc, char *argv[]) {
     soundinstalled = 1;
     sdl_audio_device_id = SDL_GetAudioStreamDevice(sdl_audio_stream);
     SDL_ResumeAudioStreamDevice(sdl_audio_stream);
-    if (developer_diagnostics) {
+    if (nesticle_developer_diagnostics) {
       fprintf(stderr, "[DIAG] SDL3 audio stream opened: device=%u rate=%d\n",
               (unsigned)sdl_audio_device_id, SOUNDRATE);
       fflush(stderr);
@@ -849,8 +851,10 @@ int main(int argc, char *argv[]) {
   cfg->load(configfile);
 
   // Init game
-  fprintf(stderr, "[LOG] Calling initgame()...\n");
-  fflush(stderr);
+  if (nesticle_developer_diagnostics) {
+    fprintf(stderr, "[LOG] Calling initgame()...\n");
+    fflush(stderr);
+  }
   if (initgame() != 0) {
     fprintf(stderr, "[FATAL] initgame() returned error\n");
     fflush(stderr);
@@ -861,8 +865,10 @@ int main(int argc, char *argv[]) {
     shutdown_sdl_platform();
     return 1;
   }
-  fprintf(stderr, "[LOG] initgame() succeeded\n");
-  fflush(stderr);
+  if (nesticle_developer_diagnostics) {
+    fprintf(stderr, "[LOG] initgame() succeeded\n");
+    fflush(stderr);
+  }
 
   // Command line ROM
   if (rom_arg) {
@@ -871,8 +877,10 @@ int main(int argc, char *argv[]) {
   }
 
   // Main loop
-  fprintf(stderr, "[LOG] Entering main loop\n");
-  fflush(stderr);
+  if (nesticle_developer_diagnostics) {
+    fprintf(stderr, "[LOG] Entering main loop\n");
+    fflush(stderr);
+  }
   Uint32 lasttime = SDL_GetTicks();
   int done = 0;
   int framecount = 0;
@@ -888,7 +896,7 @@ int main(int argc, char *argv[]) {
           break;
         case SDL_EVENT_AUDIO_DEVICE_REMOVED:
           if (!ev.adevice.recording && ev.adevice.which == sdl_audio_device_id &&
-              developer_diagnostics) {
+              nesticle_developer_diagnostics) {
             fprintf(stderr, "[DIAG] SDL3 audio device removed: device=%u\n",
                     (unsigned)ev.adevice.which);
             fflush(stderr);
@@ -899,7 +907,7 @@ int main(int argc, char *argv[]) {
           if (!ev.adevice.recording && sdl_audio_stream) {
             SDL_ResumeAudioStreamDevice(sdl_audio_stream);
             sdl_audio_device_id = SDL_GetAudioStreamDevice(sdl_audio_stream);
-            if (developer_diagnostics) {
+            if (nesticle_developer_diagnostics) {
               fprintf(stderr,
                       "[DIAG] SDL3 audio device event %u: stream device=%u\n",
                       (unsigned)ev.type, (unsigned)sdl_audio_device_id);
@@ -920,7 +928,7 @@ int main(int argc, char *argv[]) {
         case SDL_EVENT_GAMEPAD_ADDED:
         case SDL_EVENT_GAMEPAD_REMOVED:
         case SDL_EVENT_GAMEPAD_REMAPPED:
-          if (developer_diagnostics) {
+          if (nesticle_developer_diagnostics) {
             fprintf(stderr, "[DIAG] SDL3 gamepad event %u: which=%u\n",
                     (unsigned)ev.type, (unsigned)ev.gdevice.which);
             fflush(stderr);

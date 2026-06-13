@@ -6,19 +6,18 @@
 // gui_impl.cpp - Reconstructed GUI system implementation for NESticle
 // The original GUI implementation was never included in the source release.
 
-// Define GUI_DEBUG to enable widget coordinate/lifecycle logging to stderr
-#define GUI_DEBUG
-#ifdef GUI_DEBUG
+#include "devlog.h"
+
+// Widget coordinate/lifecycle logging is available with --dev-log.
 #define GUI_LOG(...)                                                           \
   do {                                                                         \
-    fprintf(stderr, "[GUI] ");                                                 \
-    fprintf(stderr, __VA_ARGS__);                                              \
-    fprintf(stderr, "\n");                                                     \
-    fflush(stderr);                                                            \
+    if (NESTICLE_DEVLOG_ENABLED) {                                             \
+      fprintf(stderr, "[GUI] ");                                               \
+      fprintf(stderr, __VA_ARGS__);                                            \
+      fprintf(stderr, "\n");                                                   \
+      fflush(stderr);                                                          \
+    }                                                                          \
   } while (0)
-#else
-#define GUI_LOG(...) ((void)0)
-#endif
 #include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -13,6 +13,7 @@
 #include "types.h"
 
 #include "dd.h"
+#include "devlog.h"
 #include "font.h"
 #include "r2img.h"
 
@@ -161,12 +162,16 @@ public:
   virtual char *getname() { return "loadrom"; }
 
   int sendmessage(GUIrect *c, int guimsg) {
-    fprintf(stderr, "[LOAD] sendmessage guimsg=%d\n", guimsg);
-    fflush(stderr);
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr, "[LOAD] sendmessage guimsg=%d\n", guimsg);
+      fflush(stderr);
+    }
     if (guimsg == GUIMSG_OK || guimsg == GUIMSG_LISTBOXDBLCLICKED) {
       char *sel = list->getselptr();
-      fprintf(stderr, "[LOAD] sel=%s\n", sel ? sel : "(null)");
-      fflush(stderr);
+      if (NESTICLE_DEVLOG_ENABLED) {
+        fprintf(stderr, "[LOAD] sel=%s\n", sel ? sel : "(null)");
+        fflush(stderr);
+      }
       if (!sel)
         return 1;
       // Handle parent directory
@@ -191,8 +196,10 @@ public:
         list->setsel(0);
         return 1;
       }
-      fprintf(stderr, "[LOAD] calling loadrom('%s')\n", sel);
-      fflush(stderr);
+      if (NESTICLE_DEVLOG_ENABLED) {
+        fprintf(stderr, "[LOAD] calling loadrom('%s')\n", sel);
+        fflush(stderr);
+      }
       loadrom(sel);
       return 1;
     }

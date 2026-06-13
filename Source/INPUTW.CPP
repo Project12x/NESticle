@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "dd.h"
+#include "devlog.h"
 #include "font.h"
 #include "gui.h"
 #include "input.h"
@@ -68,11 +69,14 @@ static void enumerateDevices() {
   }
 #endif
 
-  fprintf(stderr, "[INPUT] enumerateDevices: found %d devices\\n", numdevices);
-  for (int i = 0; i < numdevices; i++)
-    fprintf(stderr, "[INPUT]   [%d] type=%d sdl=%d name='%s'\\n", i,
-            devices[i].type, devices[i].sdlIndex, devices[i].name);
-  fflush(stderr);
+  if (NESTICLE_DEVLOG_ENABLED) {
+    fprintf(stderr, "[INPUT] enumerateDevices: found %d devices\\n",
+            numdevices);
+    for (int i = 0; i < numdevices; i++)
+      fprintf(stderr, "[INPUT]   [%d] type=%d sdl=%d name='%s'\\n", i,
+              devices[i].type, devices[i].sdlIndex, devices[i].name);
+    fflush(stderr);
+  }
 }
 
 // Legacy names kept for compatibility but not used in device list
@@ -385,8 +389,11 @@ protected:
 public:
   changeinputdevice(int num, INPUTPTR &tin)
       : GUIcontents(280, 170), in(tin), inputnum(num) {
-    fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num, (void *)in);
-    fflush(stderr);
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num,
+              (void *)in);
+      fflush(stderr);
+    }
 
     // Enumerate available devices
     enumerateDevices();
@@ -447,10 +454,12 @@ public:
     if (listIdx < 0 || listIdx >= numdevices)
       return;
     deviceentry &dev = devices[listIdx];
-    fprintf(stderr,
-            "[INPUT] changedevice: listIdx=%d type=%d sdl=%d name='%s'\n",
-            listIdx, dev.type, dev.sdlIndex, dev.name);
-    fflush(stderr);
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr,
+              "[INPUT] changedevice: listIdx=%d type=%d sdl=%d name='%s'\n",
+              listIdx, dev.type, dev.sdlIndex, dev.name);
+      fflush(stderr);
+    }
     disable();
     if (in)
       delete in;
@@ -458,8 +467,10 @@ public:
       in = newinputdevice(dev.type, dev.sdlIndex);
     else
       in = newinputdevice(dev.type);
-    fprintf(stderr, "[INPUT] newinputdevice returned %p\n", (void *)in);
-    fflush(stderr);
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr, "[INPUT] newinputdevice returned %p\n", (void *)in);
+      fflush(stderr);
+    }
     if (in)
       in->bind(lasto);
     enable();

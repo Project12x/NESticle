@@ -96,7 +96,7 @@ Use `docs/verification.md` before tagging or sharing a release package.
 
 ## Developer Diagnostics
 
-Run with `--dev-log` or `--diagnostics` to print SDL3 audio, timing, and gamepad counters to stderr. Diagnostics stay out of the retro UI.
+Run with `--dev-log` or `--diagnostics` to print startup, GUI, ROM header/mapper, CPU reset, mixer mode, SDL3 audio, timing, and gamepad counters to stderr. Diagnostics stay out of the retro UI; normal launches only print failure details.
 
 ## Save States
 

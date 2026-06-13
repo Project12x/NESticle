@@ -105,6 +105,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "../devlog.h"
+
 // 6502 defines
 #define UNDOCUMENTED // when this is defined, undocumented opcodes are handled.
                      // otherwise, they're simply treated as NOPs.
@@ -216,7 +218,8 @@ void reset6502() {
   status |= FLAG_CONSTANT;
   extern uint32_t traceCount;
   traceCount = 0;
-  fprintf(stderr, "[RESET] pc=%04X\n", pc);
+  if (NESTICLE_DEVLOG_ENABLED)
+    fprintf(stderr, "[RESET] pc=%04X\n", pc);
 }
 
 static void (*addrtable[256])();

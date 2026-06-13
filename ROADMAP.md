@@ -110,6 +110,6 @@
 
 ## Phase 18: Developer Diagnostics [PLANNED]
 - [x] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
-- [ ] Log mapper, mirroring, trainer, battery, and timing details
+- [x] Log mapper, mirroring, trainer, battery, and timing details
 - [x] Log audio underruns/overruns and input hotplug/remap events
 - [x] Keep diagnostics out of the retro UI unless explicitly enabled
