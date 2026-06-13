@@ -13,6 +13,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Startup asset validation**: Added clear preflight checks for `gui.vol` and `NESticle.pal` before the original initialization path runs.
 - **Developer diagnostics flag**: Added `--dev-log` / `--diagnostics` for off-by-default SDL3 audio, timing, and gamepad diagnostics.
 - **Release docs**: Release packages now include manual verification and save-state compatibility docs.
+- **ROM directory memory**: The retro ROM dialog now remembers the last visited ROM directory and lists recent successful ROM loads.
 
 ### Changed
 - **Build output**: New SDL3 build tree convention is `build-sdl3/`, with `SDL3.dll` copied beside `NESticle.exe`.

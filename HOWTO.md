@@ -101,3 +101,7 @@ Run with `--dev-log` or `--diagnostics` to print SDL3 audio, timing, and gamepad
 ## Save States
 
 Save states are validated before restore. See `docs/save-states.md` for the header, captured payload, and compatibility rules.
+
+## ROM Dialog
+
+The retro ROM dialog remembers the last visited ROM directory and includes recent successful ROM loads in the list.

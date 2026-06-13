@@ -87,7 +87,7 @@
 
 ## Phase 14: ROM & File UX Polish [PLANNED]
 - [ ] Keep the retro ROM dialog while improving path handling
-- [ ] Remember last ROM directory and recent ROMs
+- [x] Remember last ROM directory and recent ROMs
 - [ ] Improve long filename clipping and failed-load messages
 - [ ] Clarify save, palette, snapshot, and battery-backed RAM failures
 

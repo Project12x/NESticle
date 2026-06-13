@@ -21,6 +21,7 @@
 
 
 #define MAXOPTIONS 32
+#define MAX_RECENT_ROMS 5
 
 //structure defining configuration file
 struct config
@@ -46,6 +47,8 @@ struct config
  char option[MAXOPTIONS];
 
  char localname[16];
+ char lastromdir[260];
+ char recentroms[MAX_RECENT_ROMS][260];
 
  //sets/gets options
  char set(int num,char val) {return option[num]=val;};

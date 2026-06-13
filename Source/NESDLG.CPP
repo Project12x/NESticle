@@ -61,6 +61,17 @@ int filldirlistbox_dirs(char *filename, class GUIdirlistbox *b);
 
 int USERENTRY dirlistcmp(char **a, char **b) { return stricmp(*a, *b); }
 
+static void remember_current_rom_dir() {
+  if (!cfg)
+    return;
+  char cwd[260];
+  if (_getcwd(cwd, sizeof(cwd))) {
+    strncpy(cfg->lastromdir, cwd, sizeof(cfg->lastromdir) - 1);
+    cfg->lastromdir[sizeof(cfg->lastromdir) - 1] = 0;
+    cfg->save(configfile);
+  }
+}
+
 class GUIdirlistbox : public GUIstringlistbox {
   char path[512];
 
@@ -81,6 +92,18 @@ public:
     int num = getnumitems();
     char **s = (char **)resizeitems(num + 1);
     s[num] = strdup("..");
+    if (cfg) {
+      for (int i = 0; i < MAX_RECENT_ROMS; i++) {
+        if (!cfg->recentroms[i][0])
+          continue;
+        struct _stat st;
+        if (_stat(cfg->recentroms[i], &st) != 0 || (st.st_mode & _S_IFDIR))
+          continue;
+        num = getnumitems();
+        s = (char **)resizeitems(num + 1);
+        s[num] = strdup(cfg->recentroms[i]);
+      }
+    }
     // Add subdirectories
     enumdir("*", (DIRFUNCPTR)filldirlistbox_dirs, this);
     // Add matching files
@@ -129,6 +152,8 @@ class loaddlg : public GUIcontents {
 
 public:
   loaddlg() : GUIcontents(280, 150) {
+    if (cfg && cfg->lastromdir[0])
+      _chdir(cfg->lastromdir);
     //  list=new GUIstringlistbox(this,5,5,width()-10,9,10);
     list = new GUIdirlistbox(this, 5, 5, width() - 10, 14, "*.nes");
     list->setsel(0);
@@ -146,7 +171,8 @@ public:
         return 1;
       // Handle parent directory
       if (strcmp(sel, "..") == 0) {
-        _chdir("..");
+        if (_chdir("..") == 0)
+          remember_current_rom_dir();
         ((GUIdirlistbox *)list)->setpath("*.nes");
         list->setsel(0);
         return 1;
@@ -159,7 +185,8 @@ public:
         char *bracket = strchr(dirname, ']');
         if (bracket)
           *bracket = 0;
-        _chdir(dirname);
+        if (_chdir(dirname) == 0)
+          remember_current_rom_dir();
         ((GUIdirlistbox *)list)->setpath("*.nes");
         list->setsel(0);
         return 1;

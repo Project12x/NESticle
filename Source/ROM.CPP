@@ -6,11 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys\stat.h>
+#ifdef _MSC_VER
+#include <direct.h>
+#endif
 
 #include "types.h"
 
 #include "file.h"
 #include "message.h"
+#include "config.h"
 
 #include "m6502\m6502.h"
 
@@ -57,9 +61,53 @@ int NESinitialized = 0;
 int romloaded = 0;
 void freerom();
 void m_reset();
+extern config *cfg;
+extern char configfile[];
 
 // rom filename (without extension) eg "CASTLEVA"
 char romfilename[512];
+
+static void remember_loaded_rom(char *path) {
+  if (!cfg || !path || !path[0])
+    return;
+
+  char fullpath[512];
+#ifdef _MSC_VER
+  if (!_fullpath(fullpath, path, sizeof(fullpath)))
+#endif
+    strncpy(fullpath, path, sizeof(fullpath) - 1);
+  fullpath[sizeof(fullpath) - 1] = 0;
+
+  char dir[260];
+  strncpy(dir, fullpath, sizeof(dir) - 1);
+  dir[sizeof(dir) - 1] = 0;
+  char *slash = strrchr(dir, '\\');
+  char *fslash = strrchr(dir, '/');
+  if (!slash || (fslash && fslash > slash))
+    slash = fslash;
+  if (slash) {
+    *slash = 0;
+    strncpy(cfg->lastromdir, dir, sizeof(cfg->lastromdir) - 1);
+    cfg->lastromdir[sizeof(cfg->lastromdir) - 1] = 0;
+  }
+
+  for (int i = 0; i < MAX_RECENT_ROMS; i++) {
+    if (!stricmp(cfg->recentroms[i], fullpath)) {
+      for (int j = i; j > 0; j--)
+        strcpy(cfg->recentroms[j], cfg->recentroms[j - 1]);
+      strncpy(cfg->recentroms[0], fullpath, sizeof(cfg->recentroms[0]) - 1);
+      cfg->recentroms[0][sizeof(cfg->recentroms[0]) - 1] = 0;
+      cfg->save(configfile);
+      return;
+    }
+  }
+
+  for (int i = MAX_RECENT_ROMS - 1; i > 0; i--)
+    strcpy(cfg->recentroms[i], cfg->recentroms[i - 1]);
+  strncpy(cfg->recentroms[0], fullpath, sizeof(cfg->recentroms[0]) - 1);
+  cfg->recentroms[0][sizeof(cfg->recentroms[0]) - 1] = 0;
+  cfg->save(configfile);
+}
 
 //-----------------------------------------------------
 // NES rom loader
@@ -180,6 +228,7 @@ void loadrom(char *romfile) {
 
   // The new ROM is fully staged. Now it is safe to drop the old running state.
   freerom();
+  remember_loaded_rom(s);
   strncpy(romfilename, newromfilename, sizeof(romfilename) - 1);
   romfilename[sizeof(romfilename) - 1] = 0;
   romhdr = newhdr;

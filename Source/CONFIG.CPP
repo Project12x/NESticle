@@ -40,6 +40,10 @@ static void normalizeconfig(config &c) {
    if (!validpadmap(c.ids.pm[i]))
     c.ids.pm[i]=defpadmap;
   }
+
+ c.lastromdir[sizeof(c.lastromdir)-1]=0;
+ for (int i=0; i<MAX_RECENT_ROMS; i++)
+  c.recentroms[i][sizeof(c.recentroms[i])-1]=0;
 }
 
 config::config()
