@@ -68,20 +68,18 @@ void loadrom(char *romfile) {
   if (!romfile)
     return;
 
-  // free old rom
-  freerom();
-
   // get rom name without extension
-  strncpy(romfilename, romfile, sizeof(romfilename) - 1);
-  romfilename[sizeof(romfilename) - 1] = 0;
+  char newromfilename[512];
+  strncpy(newromfilename, romfile, sizeof(newromfilename) - 1);
+  newromfilename[sizeof(newromfilename) - 1] = 0;
   // Strip extension: use strrchr to find LAST dot (handles "Super Mario Bros.
   // (USA).nes")
-  char *lastdot = strrchr(romfilename, '.');
+  char *lastdot = strrchr(newromfilename, '.');
   if (lastdot)
     *lastdot = 0;
 
   char s[512];
-  strncpy(s, romfilename, sizeof(s) - 5);
+  strncpy(s, newromfilename, sizeof(s) - 5);
   s[sizeof(s) - 5] = 0;
   strcat(s, ".nes"); // add extension
 
@@ -89,52 +87,109 @@ void loadrom(char *romfile) {
   FILEIO f;
   if (f.open(s)) {
     msg.error("Unable to open file %s", s);
+    fprintf(stderr, "[ROM] open failed: '%s'\n", s);
+    fflush(stderr);
     return;
   }
 
   // read header
-  if (f.read(&romhdr, sizeof(romhdr))) {
-    msg.error("Unable to read header");
+  NESROMHEADER newhdr;
+  if (f.read(&newhdr, sizeof(newhdr))) {
+    msg.error("Unable to read ROM header from %s", s);
+    fprintf(stderr, "[ROM] short or unreadable header: '%s'\n", s);
+    fflush(stderr);
+    f.close();
     return;
   }
 
   // see if header file exists ?
   FILEIO g;
   char hdrfile[512];
-  strncpy(hdrfile, romfilename, sizeof(hdrfile) - 5);
+  strncpy(hdrfile, newromfilename, sizeof(hdrfile) - 5);
   hdrfile[sizeof(hdrfile) - 5] = 0;
   strcat(hdrfile, ".hdr");
   if (!g.open(hdrfile)) // does header file exist?
   {
-    g.read(&romhdr, sizeof(romhdr));
+    if (g.read(&newhdr, sizeof(newhdr))) {
+      msg.error("Unable to read header file %s", hdrfile);
+      fprintf(stderr, "[ROM] short or unreadable header override: '%s'\n",
+              hdrfile);
+      fflush(stderr);
+      g.close();
+      f.close();
+      return;
+    }
     g.close();
     msg.printf(1, "Header read from %s", hdrfile);
   }
 
-  if (!romhdr.validate()) {
-    msg.error("Bad ROM header");
+  int newnumrom = (unsigned char)newhdr.num16k;
+  int newnumvrom = (unsigned char)newhdr.num8k;
+  if (!newhdr.validate() || newnumrom <= 0) {
+    msg.error("Bad ROM header in %s", s);
+    fprintf(stderr, "[ROM] bad header: '%s'\n", s);
+    fflush(stderr);
+    f.close();
     return;
   }
 
   // load trainer
-  if (romhdr.trainer)
-    trainer = (byte *)f.readalloc(512);
+  byte *newtrainer = 0;
+  if (newhdr.trainer) {
+    newtrainer = (byte *)f.readalloc(512);
+    if (!newtrainer) {
+      msg.error("Unable to read trainer from %s", s);
+      fprintf(stderr, "[ROM] trainer read failed: '%s'\n", s);
+      fflush(stderr);
+      f.close();
+      return;
+    }
+  }
 
   // read ROM
-  numrom = romhdr.num16k;
-  ROM = (ROMPAGE *)f.readalloc(numrom * sizeof(ROMPAGE));
+  ROMPAGE *newROM = (ROMPAGE *)f.readalloc(newnumrom * sizeof(ROMPAGE));
+  if (!newROM) {
+    msg.error("Unable to read PRG ROM from %s", s);
+    fprintf(stderr, "[ROM] PRG read failed: '%s'\n", s);
+    fflush(stderr);
+    FREE(newtrainer);
+    f.close();
+    return;
+  }
 
   // read VROM
-  numvrom = romhdr.num8k;
-  VROM = (VROMPAGE *)f.readalloc(numvrom * sizeof(VROMPAGE)); // read vrom
-  msg.printf(1, "%dK ROM - %dK VROM", numrom * sizeof(ROMPAGE) / 1024,
-             numvrom * sizeof(VROMPAGE) / 1024);
+  VROMPAGE *newVROM = 0;
+  if (newnumvrom > 0) {
+    newVROM = (VROMPAGE *)f.readalloc(newnumvrom * sizeof(VROMPAGE));
+    if (!newVROM) {
+      msg.error("Unable to read CHR ROM from %s", s);
+      fprintf(stderr, "[ROM] CHR read failed: '%s'\n", s);
+      fflush(stderr);
+      FREE(newtrainer);
+      FREE(newROM);
+      f.close();
+      return;
+    }
+  }
 
   int bytesleft = f.size() - f.getpos();
   if (bytesleft)
     msg.printf(1, "%d bytes left at end of .NES file", bytesleft);
 
   f.close();
+
+  // The new ROM is fully staged. Now it is safe to drop the old running state.
+  freerom();
+  strncpy(romfilename, newromfilename, sizeof(romfilename) - 1);
+  romfilename[sizeof(romfilename) - 1] = 0;
+  romhdr = newhdr;
+  trainer = newtrainer;
+  numrom = newnumrom;
+  ROM = newROM;
+  numvrom = newnumvrom;
+  VROM = newVROM;
+  msg.printf(1, "%dK ROM - %dK VROM", numrom * sizeof(ROMPAGE) / 1024,
+             numvrom * sizeof(VROMPAGE) / 1024);
   // msg.printf(2,"%s loaded",romfile);
   romloaded = 1;
 

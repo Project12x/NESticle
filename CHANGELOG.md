@@ -16,6 +16,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Build output**: New SDL3 build tree convention is `build-sdl3/`, with `SDL3.dll` copied beside `NESticle.exe`.
 - **Gamepad APIs**: Ported SDL GameController usage to SDL3 Gamepad APIs while keeping the same NES button behavior and remapping UI.
 - **SDL3 shutdown path**: Centralized SDL cleanup, restored the Windows timer period on exit, and fail cleanly if the primary texture cannot be created.
+- **ROM load failures**: ROM files are now staged in temporary allocations and validated before replacing the current running ROM state.
 
 ## [0.5.0] - 2026-03-17
 
