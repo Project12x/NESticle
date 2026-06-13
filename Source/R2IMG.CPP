@@ -9,9 +9,10 @@
 #include <ctype.h>
 #include <direct.h>
 
-//functions for image 
+//functions for image
 #include "r2img.h"
 #include "file.h"
+#include "message.h"
 
 extern "C" int PITCH,SCREENX,SCREENY;
 
@@ -24,9 +25,10 @@ IMG *loadimage(char *file)
 
  IMG *i=(IMG *)g.readalloc(g.size());
  g.close();
- if (i->type!=IMG_TYPE) return 0;
+ if (!i) return 0;
+ if (i->type!=IMG_TYPE) {free(i); return 0;}
  return i;
-}    
+}
 
 
 SCR *loadscreen(char *file)
@@ -38,9 +40,10 @@ SCR *loadscreen(char *file)
 
  SCR *i=(SCR *)g.readalloc(g.size());
  g.close();
- if (i->type!=SCR_TYPE) return 0;
+ if (!i) return 0;
+ if (i->type!=SCR_TYPE) {free(i); return 0;}
  return i;
-}    
+}
 
 SCR *SCR::newSCR(int x,int y)
 {
@@ -52,7 +55,7 @@ SCR *SCR::newSCR(int x,int y)
  s->yw=y;
  s->size=sizeof(SCR)+x*y;
  return s;
-}    
+}
 
 
 
@@ -113,13 +116,22 @@ void BMAP::write(char *file)
   {
    if (type==IMG_TYPE) strcat(file,".R2");
    if (type==SCR_TYPE) strcat(file,".SCR");
-  }
+ }
 
  FILEIO f;
- f.create(file);
- f.write(this,size);
+ if (f.create(file))
+  {
+   msg.error("Unable to create bitmap %s",file);
+   return;
+  }
+ if (f.write(this,size))
+  {
+   f.close();
+   msg.error("Unable to write bitmap %s",file);
+   return;
+  }
  f.close();
-}    
+}
 
 
 

@@ -7,6 +7,7 @@
 #include "file.h"
 #include "r2img.h"
 #include "font.h"
+#include "message.h"
 
 //font constructor
 FONT::FONT()
@@ -81,11 +82,20 @@ void __cdecl FONT::printf(int x,int y,char *format,...)
 void FONT::write(char *filename)
 {
  FILEIO f;
- f.create(filename);
- f.write(this,size);
+ if (f.create(filename))
+  {
+   msg.error("Unable to create font %s",filename);
+   return;
+  }
+ if (f.write(this,size))
+  {
+   f.close();
+   msg.error("Unable to write font %s",filename);
+   return;
+  }
  f.close();
  return;
-}    
+}
 
 
 FONT *FONT::addsymbol(FONT *f,IMG *x,char c)
@@ -105,9 +115,10 @@ FONT *FONT::addsymbol(FONT *f,IMG *x,char c)
 
 FONT *loadfont(char *fontfile)
 {
- FILEIO f(fontfile);
+ FILEIO f;
+ if (f.open(fontfile)) return 0;
  return (FONT *)f.readalloc(f.size());
-}    
+}
 
 FONT *FONT::duplicate()
 {
