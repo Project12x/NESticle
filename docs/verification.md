@@ -7,6 +7,7 @@ Use this checklist before tagging or sharing a release package. Do not commit or
 - [ ] Configure: `cmake -B build-sdl3 -G "Visual Studio 17 2022"`
 - [ ] Build: `cmake --build build-sdl3 --config Release`
 - [ ] Package: `cmake --build build-sdl3 --config Release --target package_release`
+- [ ] Run the package target twice and confirm the zip SHA-256 hash is unchanged.
 - [ ] Confirm `releases/NESticle-sdl3-Release.zip` contains only:
   - `NESticle.exe`
   - `SDL3.dll`
@@ -24,6 +25,7 @@ Use this checklist before tagging or sharing a release package. Do not commit or
 
 - [ ] Launch from project root: `build-sdl3\Release\NESticle.exe`
 - [ ] Launch from extracted package directory: `NESticle.exe`
+- [ ] Confirm a normal launch exits cleanly when closed and does not print stderr/stdout.
 - [ ] Confirm the retro GUI, cursor, menus, and file dialog are visible.
 - [ ] Temporarily rename `gui.vol`, launch, and confirm failure is clean and understandable.
 - [ ] Temporarily rename `NESticle.pal`, launch, and confirm palette failure is clean and understandable.
