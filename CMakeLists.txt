@@ -5,10 +5,15 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# SDL2 paths (extracted to external/)
-set(SDL2_DIR "${CMAKE_SOURCE_DIR}/external/SDL2-2.30.10")
-set(SDL2_INCLUDE_DIR "${SDL2_DIR}/include")
-set(SDL2_LIB_DIR "${SDL2_DIR}/lib/x64")
+# SDL3 source is vendored under external/ and built as a CMake subproject.
+set(SDL3_DIR "${CMAKE_SOURCE_DIR}/external/SDL3-3.4.10")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/$<CONFIG>")
+set(SDL_SHARED ON CACHE BOOL "Build SDL3 shared library" FORCE)
+set(SDL_STATIC OFF CACHE BOOL "Build SDL3 static library" FORCE)
+set(SDL_TESTS OFF CACHE BOOL "Build SDL3 tests" FORCE)
+set(SDL_EXAMPLES OFF CACHE BOOL "Build SDL3 examples" FORCE)
+add_subdirectory("${SDL3_DIR}" EXCLUDE_FROM_ALL)
 
 # Define WIN95 globally (NESticle uses this for platform-conditional code)
 add_definitions(-DWIN95)
@@ -58,7 +63,7 @@ set(MODERN_SOURCES
     Source/m6502/m6502_shim.cpp
     Source/m6502/fake6502.c
     Source/asm_replacements.cpp
-    Source/platform_sdl2.cpp
+    Source/platform_sdl3.cpp
     Source/gui_impl.cpp
 )
 
@@ -70,24 +75,23 @@ add_executable(NESticle
 target_include_directories(NESticle PRIVATE
     Source
     Source/m6502
-    ${SDL2_INCLUDE_DIR}
 )
 
-target_compile_definitions(NESticle PRIVATE SDL2)
+target_compile_definitions(NESticle PRIVATE SDL3)
 
-target_link_libraries(NESticle PRIVATE
-    ${SDL2_LIB_DIR}/SDL2.lib
-    ${SDL2_LIB_DIR}/SDL2main.lib
-)
+target_link_libraries(NESticle PRIVATE SDL3::SDL3)
 
 # On Windows, link with WinMM for timeGetTime compatibility stubs
 if(WIN32)
     target_link_libraries(NESticle PRIVATE winmm)
 endif()
 
-# Copy SDL2.dll to output directory
-add_custom_command(TARGET NESticle POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${SDL2_LIB_DIR}/SDL2.dll"
-        $<TARGET_FILE_DIR:NESticle>
-)
+# Copy SDL3.dll to output directory on Windows.
+if(WIN32 AND TARGET SDL3::SDL3-shared)
+    add_custom_command(TARGET NESticle POST_BUILD
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            $<TARGET_FILE:SDL3::SDL3-shared>
+            $<TARGET_FILE_DIR:NESticle>
+        VERBATIM
+    )
+endif()

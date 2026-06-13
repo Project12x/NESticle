@@ -1,5 +1,6 @@
 # Build
 build/
+build-sdl3/
 *.obj
 *.pdb
 *.ilk
