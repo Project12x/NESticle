@@ -323,14 +323,14 @@ void ROOT::refresh(int r, void *c) {
 int cmd_loadrom(char *p) {
   if (!p || !p[0])
     return 0;
-  loadrom(p);
-  return 1;
+  return loadrom(p) ? 1 : 0;
 }
 
 int cmd_runrom(char *p) {
   if (!p || !p[0])
     return 0;
-  loadrom(p);
+  if (!loadrom(p))
+    return 0;
   if (nv) {
     disablegui();
     ((GUImaximizebox *)nv->parent)->maximize();
@@ -343,7 +343,8 @@ void m_loadstate();
 int cmd_restorerom(char *p) {
   if (!p || !p[0])
     return 0;
-  loadrom(p);
+  if (!loadrom(p))
+    return 0;
   if (nv) {
     disablegui();
     ((GUImaximizebox *)nv->parent)->maximize();

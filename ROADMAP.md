@@ -86,9 +86,9 @@
 - [ ] Add deadzone tuning and mapping conflict diagnostics
 
 ## Phase 14: ROM & File UX Polish [PLANNED]
-- [ ] Keep the retro ROM dialog while improving path handling
+- [x] Keep the retro ROM dialog while improving path handling
 - [x] Remember last ROM directory and recent ROMs
-- [ ] Improve long filename clipping and failed-load messages
+- [x] Improve long filename clipping and failed-load messages
 - [x] Clarify save, palette, snapshot, and battery-backed RAM failures
 
 ## Phase 15: Settings Durability [PLANNED]

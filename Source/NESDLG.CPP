@@ -39,7 +39,7 @@
 
 #include "timing.h"
 
-void loadrom(char *filename);
+int loadrom(char *filename);
 
 void enablegui();
 //------------------------------
@@ -200,7 +200,10 @@ public:
         fprintf(stderr, "[LOAD] calling loadrom('%s')\n", sel);
         fflush(stderr);
       }
-      loadrom(sel);
+      if (!loadrom(sel)) {
+        extern void m_showmessages();
+        m_showmessages();
+      }
       return 1;
     }
     return 1;

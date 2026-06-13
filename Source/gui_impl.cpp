@@ -1188,6 +1188,29 @@ int GUIlistbox::keyhit(char scan, char key) {
 }
 
 // ---- GUIstringlistbox ----
+static void draw_clipped_listbox_text(FONT *f, char *text, char *dest, int x,
+                                      int y, int maxpx) {
+  if (f->getwidth(text) <= maxpx) {
+    f->draw(text, dest, x, y);
+    return;
+  }
+
+  char buf[256];
+  strncpy(buf, text, sizeof(buf) - 1);
+  buf[sizeof(buf) - 1] = 0;
+
+  const char *mark = "...";
+  int markw = f->getwidth((char *)mark);
+  int len = (int)strlen(buf);
+  while (len > 0 && f->getwidth(buf) + markw > maxpx)
+    buf[--len] = 0;
+
+  if (len > 0 && (int)strlen(buf) + 3 < (int)sizeof(buf))
+    strcat(buf, mark);
+
+  f->draw(buf, dest, x, y);
+}
+
 void GUIstringlistbox::drawitems(char *dest, int x, int y) {
   if (!font[3])
     return;
@@ -1199,18 +1222,8 @@ void GUIstringlistbox::drawitems(char *dest, int x, int y) {
       continue;
     if (start + i == sel)
       drawrect(dest, 2, x, y + i * itemheight, width() - 14, itemheight);
-    // Truncate text to fit within listbox width
-    if (font[3]->getwidth(s) > maxpx) {
-      char buf[256];
-      strncpy(buf, s, sizeof(buf) - 1);
-      buf[sizeof(buf) - 1] = 0;
-      int len = (int)strlen(buf);
-      while (len > 0 && font[3]->getwidth(buf) > maxpx)
-        buf[--len] = 0;
-      font[3]->draw(buf, dest, x + 2, y + i * itemheight + 1);
-    } else {
-      font[3]->draw(s, dest, x + 2, y + i * itemheight + 1);
-    }
+    draw_clipped_listbox_text(font[3], s, dest, x + 2,
+                              y + i * itemheight + 1, maxpx - 2);
   }
 }
 

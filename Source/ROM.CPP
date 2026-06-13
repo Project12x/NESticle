@@ -113,24 +113,38 @@ static void remember_loaded_rom(char *path) {
 //-----------------------------------------------------
 // NES rom loader
 
-void loadrom(char *romfile) {
-  if (!romfile)
-    return;
+static char *filename_part(char *path) {
+  char *slash = strrchr(path, '\\');
+  char *fslash = strrchr(path, '/');
+  if (!slash || (fslash && fslash > slash))
+    slash = fslash;
+  return slash ? slash + 1 : path;
+}
 
-  // get rom name without extension
-  char newromfilename[512];
-  strncpy(newromfilename, romfile, sizeof(newromfilename) - 1);
-  newromfilename[sizeof(newromfilename) - 1] = 0;
-  // Strip extension: use strrchr to find LAST dot (handles "Super Mario Bros.
-  // (USA).nes")
-  char *lastdot = strrchr(newromfilename, '.');
+static void make_nes_paths(char *romfile, char *rompath, int rompathsize,
+                           char *rombase, int rombasesize) {
+  strncpy(rombase, romfile, rombasesize - 1);
+  rombase[rombasesize - 1] = 0;
+
+  char *name = filename_part(rombase);
+  char *lastdot = strrchr(name, '.');
   if (lastdot)
     *lastdot = 0;
 
+  strncpy(rompath, rombase, rompathsize - 5);
+  rompath[rompathsize - 5] = 0;
+  strcat(rompath, ".nes");
+}
+
+int loadrom(char *romfile) {
+  if (!romfile)
+    return 0;
+
+  // get rom name without extension
+  char newromfilename[512];
   char s[512];
-  strncpy(s, newromfilename, sizeof(s) - 5);
-  s[sizeof(s) - 5] = 0;
-  strcat(s, ".nes"); // add extension
+  make_nes_paths(romfile, s, sizeof(s), newromfilename,
+                 sizeof(newromfilename));
 
   msg.printf(2, "Loading rom %s...", s);
   FILEIO f;
@@ -138,7 +152,7 @@ void loadrom(char *romfile) {
     msg.error("Unable to open file %s", s);
     fprintf(stderr, "[ROM] open failed: '%s'\n", s);
     fflush(stderr);
-    return;
+    return 0;
   }
 
   // read header
@@ -148,7 +162,7 @@ void loadrom(char *romfile) {
     fprintf(stderr, "[ROM] short or unreadable header: '%s'\n", s);
     fflush(stderr);
     f.close();
-    return;
+    return 0;
   }
 
   // see if header file exists ?
@@ -166,7 +180,7 @@ void loadrom(char *romfile) {
       fflush(stderr);
       g.close();
       f.close();
-      return;
+      return 0;
     }
     g.close();
     msg.printf(1, "Header read from %s", hdrfile);
@@ -179,7 +193,7 @@ void loadrom(char *romfile) {
     fprintf(stderr, "[ROM] bad header: '%s'\n", s);
     fflush(stderr);
     f.close();
-    return;
+    return 0;
   }
 
   // load trainer
@@ -191,7 +205,7 @@ void loadrom(char *romfile) {
       fprintf(stderr, "[ROM] trainer read failed: '%s'\n", s);
       fflush(stderr);
       f.close();
-      return;
+      return 0;
     }
   }
 
@@ -203,7 +217,7 @@ void loadrom(char *romfile) {
     fflush(stderr);
     FREE(newtrainer);
     f.close();
-    return;
+    return 0;
   }
 
   // read VROM
@@ -217,7 +231,7 @@ void loadrom(char *romfile) {
       FREE(newtrainer);
       FREE(newROM);
       f.close();
-      return;
+      return 0;
     }
   }
 
@@ -288,6 +302,7 @@ void loadrom(char *romfile) {
 
   // auto-start emulation
   m_reset();
+  return 1;
 }
 
 void freerom() {

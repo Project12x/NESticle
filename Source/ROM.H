@@ -30,7 +30,7 @@ public:
   void copyfromRAM();
 };
 
-void loadrom(char *romfile);
+int loadrom(char *romfile);
 void freerom();
 
 extern char romname[128]; // name of romfile

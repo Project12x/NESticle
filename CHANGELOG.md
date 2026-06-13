@@ -27,6 +27,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Gamepad reconnect handling**: SDL3 gamepads now close cleanly when disconnected and try to reopen by instance id before falling back to slot.
 - **File failure messages**: Battery saves, palette writes, ROM header writes, and snapshots now report create/read/write failures instead of silently continuing.
 - **Quiet default diagnostics**: Startup, GUI, input, ROM header, mapper, CPU reset, and mixer-mode details now print only with `--dev-log` / `--diagnostics`; failure messages still print normally.
+- **ROM dialog path handling**: The retro loader now strips extensions only from the filename portion, shows clipped long entries with `...`, and keeps command-line run/restore flows from advancing after a failed ROM load.
 
 ## [0.5.0] - 2026-03-17
 
