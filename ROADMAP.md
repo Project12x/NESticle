@@ -2,7 +2,9 @@
 
 ## Preservation Rule
 
-This project is a restoration-minded port, not a correctness rewrite. Future roadmap work must preserve NESticle's 1990s personality: its retro UI, sound character, palette look, timing feel, and visible emulator quirks. Do not "fix" odd behavior merely because another emulator, hardware capture, or modern accuracy test differs. Change behavior only for crashes, memory/resource bugs, bad host integration, corrupt persistence, unsupported-file handling, or a clearly documented compatibility blocker that prevents a game from running.
+This project is a restoration-minded port, not a correctness rewrite. Future roadmap work must preserve NESticle's 1990s personality: its retro UI, sound character, palette look, timing feel, and visible emulator quirks. Do not "fix" odd behavior merely because another emulator, hardware capture, or modern accuracy test differs. Other NES emulators already cover near-perfect accuracy; this port exists to make NESticle stable and usable on modern Windows without sanding off its identity.
+
+Allowed behavior changes are limited to crashes, memory/resource bugs, bad host integration, corrupt persistence, unsupported-file handling, or a clearly documented compatibility blocker that prevents a game from running. Sound, palette, timing, UI, and glitch signatures should be cataloged, not normalized.
 
 ## Phase 0: Analysis & Planning [COMPLETE]
 - [x] Clone and explore repository
@@ -122,7 +124,7 @@ This project is a restoration-minded port, not a correctness rewrite. Future roa
 - [ ] Build a known-ROM compatibility matrix without bundling ROMs
 - [ ] Record mapper, mirroring, trainer, battery, region, and observed behavior for each manual test
 - [ ] Classify failures as mapper, CPU, PPU, APU, input, timing, save, or host-platform issues
-- [ ] Record NESticle-specific sound, palette, timing, and UI quirks as expected behavior unless they cause crashes, corruption, or a documented compatibility blocker
+- [ ] Record NESticle-specific sound, palette, timing, UI, and glitch signatures as expected behavior unless they cause crashes, corruption, or a documented game-running blocker
 
 ## Phase 20: Mapper Coverage Expansion [PLANNED]
 - [ ] Prioritize mapper additions from the compatibility matrix instead of popularity alone
@@ -134,7 +136,7 @@ This project is a restoration-minded port, not a correctness rewrite. Future roa
 - [ ] Add developer-only frame, scanline, sprite-0, and IRQ trace modes
 - [ ] Compare behavior against accepted NES test ROM results for diagnosis, not as a blanket mandate to erase NESticle quirks
 - [ ] Document each timing change with the ROM/test that motivated it and the NESticle behavior intentionally preserved
-- [ ] Avoid broad cycle-accuracy rewrites unless a specific game-running failure requires them
+- [ ] Avoid broad cycle-accuracy rewrites; prefer the smallest stability or game-running fix that preserves the old feel
 
 ## Phase 22: Audio And Input Verification Depth [PLANNED]
 - [ ] Add repeatable audio underrun and buffer-stability checks for long sessions without changing NESticle's sound signature

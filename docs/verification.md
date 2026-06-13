@@ -38,7 +38,7 @@ Use this checklist before tagging or sharing a release package. Do not commit or
 - [ ] Confirm no bundled ROMs are present in the release zip.
 - [ ] Record ROM/test name, mapper, mirroring, trainer, battery, region, and observed result in release notes.
 - [ ] Classify failures before fixing them: mapper, CPU, PPU, APU, input, timing, save, or host-platform.
-- [ ] Mark NESticle-specific sound, palette, timing, UI, or glitch signatures as preserved behavior unless they cause a crash, corruption, host failure, or game-running blocker.
+- [ ] Mark NESticle-specific sound, palette, timing, UI, or glitch signatures as preserved behavior unless they cause a crash, corruption, host failure, or game-running blocker; do not fail verification merely because another emulator is more accurate.
 
 ## Input
 

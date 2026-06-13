@@ -97,6 +97,7 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 - New mapper work belongs in `MMC.CPP/.H`; helper code should stay small and isolated.
 - Developer diagnostics must remain off by default and outside the retro UI unless explicitly enabled.
 - NESticle's sound character, palette look, timing feel, retro UI, and visible quirks are preservation targets.
+- Hardware-perfect accuracy is not an architectural goal; stability, packaging, host integration, and documented game-running blockers are.
 - Compatibility fixes need evidence: a known ROM/test, mapper number, region/timing expectation, observed failure, and a note on which NESticle-visible behavior is intentionally preserved.
 
 ## Forward Roadmap Seams

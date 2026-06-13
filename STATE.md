@@ -31,7 +31,7 @@
 | Compatibility matrix | Planned | Manual known-ROM evidence, no bundled ROMs |
 
 ## Preservation Boundary
-NESticle's 1990s behavior is part of the product. Do not chase hardware-perfect audio, palette, timing, or UI behavior as a goal by itself. Treat odd sound, color, and glitch signatures as expected unless they are tied to a crash, corruption, host-platform failure, or a documented game-running compatibility blocker.
+NESticle's 1990s behavior is part of the product. Do not chase hardware-perfect audio, palette, timing, or UI behavior as a goal by itself. Other NES emulators already serve the near-perfect accuracy use case. This branch should make NESticle stable, packageable, and trustworthy on modern Windows while treating odd sound, color, timing, and glitch signatures as expected unless they are tied to a crash, corruption, host-platform failure, or a documented game-running blocker.
 
 ## Dependencies
 - SDL3 (zlib license)
