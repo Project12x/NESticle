@@ -89,7 +89,7 @@
 - [ ] Keep the retro ROM dialog while improving path handling
 - [x] Remember last ROM directory and recent ROMs
 - [ ] Improve long filename clipping and failed-load messages
-- [ ] Clarify save, palette, snapshot, and battery-backed RAM failures
+- [x] Clarify save, palette, snapshot, and battery-backed RAM failures
 
 ## Phase 15: Settings Durability [PLANNED]
 - [x] Version and validate config files

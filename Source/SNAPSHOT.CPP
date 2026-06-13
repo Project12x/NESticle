@@ -66,17 +66,26 @@ void takesnapshot(char *dest,lrect &r)
  strcat(name,".pcx");
 
  FILEIO f;
- f.create(name);
+ if (f.create(name))
+ {
+  free(s);
+  msg.error("Unable to create snapshot %s",name);
+  return;
+ }
 
  //write header
  pcx_header hdr(r.width(),r.height());
- f.write(&hdr,sizeof(hdr));
+ if (f.write(&hdr,sizeof(hdr)))
+  goto snapshot_write_failed;
 
  //write data
- f.write(s,r.width()*r.height());
+ if (f.write(s,r.width()*r.height()))
+  goto snapshot_write_failed;
 
  //write palette
- f.writechar(12);
+ char palette_marker=12;
+ if (f.write(&palette_marker,sizeof(palette_marker)))
+  goto snapshot_write_failed;
 
  COLOR p[256];
  memset(p,0,256*sizeof(COLOR));
@@ -84,12 +93,19 @@ void takesnapshot(char *dest,lrect &r)
 
  for (int i=0; i<32; i++)
   p[i+16]=nespal[ppu->bgpal.c[i]];
- f.write(p,256*sizeof(COLOR));
+ if (f.write(p,256*sizeof(COLOR)))
+  goto snapshot_write_failed;
  f.close();
 
  free(s);
 
  msg.printf(1,"Snapshot saved to %s %dx%d",name,r.width(),r.height());
+ return;
+
+snapshot_write_failed:
+ f.close();
+ free(s);
+ msg.error("Unable to write snapshot %s",name);
 }
 
 

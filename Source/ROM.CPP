@@ -380,7 +380,13 @@ void BATTERYMEM::read(char *romfilename) {
   static FILEIO f;
   if (!f.open(s)) // try and open savegame...
   {
-    f.read(data, 0x2000); // read it!
+    if (f.read(data, 0x2000)) {
+      f.close();
+      msg.error("Unable to read save game %s", s);
+      fprintf(stderr, "[SAVE] read failed: '%s'\n", s);
+      fflush(stderr);
+      return;
+    }
     f.close();
     msg.printf(1, "Save game loaded from %s", s);
   }
@@ -393,8 +399,19 @@ void BATTERYMEM::write(char *romfilename) {
 
   // save savegame
   FILEIO f;
-  f.create(s);
-  f.write(data, 0x2000); // read it!
+  if (f.create(s)) {
+    msg.error("Unable to create save game %s", s);
+    fprintf(stderr, "[SAVE] create failed: '%s'\n", s);
+    fflush(stderr);
+    return;
+  }
+  if (f.write(data, 0x2000)) {
+    f.close();
+    msg.error("Unable to write save game %s", s);
+    fprintf(stderr, "[SAVE] write failed: '%s'\n", s);
+    fflush(stderr);
+    return;
+  }
   f.close();
   msg.printf(1, "Save game saved to %s", s);
 }
@@ -450,9 +467,15 @@ void m_writeromheader() {
   strcat(s, ".nes");
 
   FILEIO f;
-  if (f.open(s))
+  if (f.open(s)) {
+    msg.error("Unable to open ROM header target %s", s);
     return;
-  f.write(&romhdr, sizeof(romhdr));
+  }
+  if (f.write(&romhdr, sizeof(romhdr))) {
+    f.close();
+    msg.error("Unable to write ROM header %s", s);
+    return;
+  }
   f.close();
   msg.printf(1, "NES ROM header written to %s", s);
 }
@@ -467,8 +490,15 @@ void m_savepalette() {
   if (!nv)
     return;
   FILEIO f;
-  f.create("aNES.pal");
-  f.write(nespal, 256 * sizeof(COLOR));
+  if (f.create("aNES.pal")) {
+    msg.error("Unable to create aNES.pal");
+    return;
+  }
+  if (f.write(nespal, 256 * sizeof(COLOR))) {
+    f.close();
+    msg.error("Unable to write aNES.pal");
+    return;
+  }
   f.close();
   msg.printf(1, "NES Palette saved to aNES.pal");
 }
