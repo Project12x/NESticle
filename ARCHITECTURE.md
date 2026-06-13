@@ -7,7 +7,7 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 ```
 +------------------+     +------------------+
 |  Platform Layer  |     |    GUI System     |
-|  (SDL2)          |     |  (8-bit widgets)  |
+|  (SDL3)          |     |  (8-bit widgets)  |
 +--------+---------+     +--------+---------+
          |                         |
          v                         v
@@ -72,16 +72,16 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 - Graphics loaded from `gui.vol` resource file
 
 ### Input (`INPUT.CPP/.H`, `INPUTW.CPP`)
-- Keyboard input via SDL2 scancode mapping
-- SDL GameController support with configurable button remapping
+- Keyboard input via SDL3 scancode mapping
+- SDL Gamepad support with configurable button remapping
 - `padmap` struct stores NES button -> SDL button assignments
 - `redefinepad` dialog for interactive button picker (frame-based polling)
 - Settings persisted in `inputdevicesettings`
 
-### Platform (`platform_sdl2.cpp`)
-- SDL2 window, 8-bit surface, palette
-- Audio ring buffer with SDL callback
-- Keyboard, mouse, GameController input
+### Platform (`platform_sdl3.cpp`)
+- SDL3 window, 8-bit surface, palette-backed texture
+- Audio ring buffer feeding an SDL3 audio stream callback
+- Keyboard, mouse, Gamepad input
 - ALT+ENTER fullscreen toggle with SDL logical scaling
 - Replaces original DirectDraw/DirectSound/Win32 backend
 
@@ -95,7 +95,7 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 2. `tickemu()` runs VBlank cycles -> frame cycles via `m6502exec()`
 3. Mid-frame events tracked in scanline event list
 4. `updatescreen()` renders PPU state to backbuffer
-5. SDL2 flips surface to window
+5. SDL3 uploads the palettized surface and renders it to the window
 
 ## Audio Data Flow
 1. `nessound::update()` called per frame

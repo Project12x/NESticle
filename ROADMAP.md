@@ -59,12 +59,12 @@
 - [x] NES hardware nonlinear mixer
 - [x] Psychoacoustic noise attenuation
 
-## Phase 10: SDL3 Backend Migration [PLANNED]
-- [ ] Replace SDL2 as the default backend with SDL3 on the improvement branch
-- [ ] Preserve palettized framebuffer behavior, nearest-neighbor scaling, and retro fullscreen semantics
-- [ ] Port SDL audio callback usage to SDL3 audio streams
-- [ ] Port SDL GameController usage to SDL3 gamepad APIs
-- [ ] Update CMake and runtime DLL copy rules for vendored SDL3
+## Phase 10: SDL3 Backend Migration [COMPLETE]
+- [x] Replace SDL2 as the default backend with SDL3 on the improvement branch
+- [x] Preserve palettized framebuffer behavior, nearest-neighbor scaling, and retro fullscreen semantics
+- [x] Port SDL audio callback usage to SDL3 audio streams
+- [x] Port SDL GameController usage to SDL3 gamepad APIs
+- [x] Update CMake and runtime DLL copy rules for vendored SDL3
 
 ## Phase 11: Reliability Hardening [PLANNED]
 - [ ] Harden startup asset checks and failure messages

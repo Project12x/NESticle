@@ -1,6 +1,6 @@
 # NESticle (Modernized)
 
-NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL2.
+NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL3.
 
 ![NESticle running Super Mario Bros.](screenshot.png)
 
@@ -9,11 +9,11 @@ NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL2.
 | Component | Original | Replacement |
 |---|---|---|
 | Compiler | Borland C++ / Watcom | MSVC 2022 |
-| Platform | DOS / Win95 DirectDraw+DirectSound | SDL2 |
+| Platform | DOS / Win95 DirectDraw+DirectSound | SDL3 |
 | 6502 CPU | x86 ASM core | fake6502 (public domain) |
 | Rendering | x86 ASM blitters | C |
 | Audio | 3-channel linear mixer | 5-channel NES DAC formulas |
-| Input | Win95 keyboard | SDL2 keyboard + GameController |
+| Input | Win95 keyboard | SDL3 keyboard + Gamepad |
 
 ## Controls
 
@@ -27,7 +27,7 @@ NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL2.
 
 ## Running
 
-Unzip and run `NESticle.exe`. Requires `gui.vol`, `nes.pal`, and `SDL2.dll` in the same directory (included in release).
+Unzip and run `NESticle.exe`. Requires `gui.vol`, `NESticle.pal`, and `SDL3.dll` in the same directory (included in release).
 
 ## Known Issues
 
@@ -39,4 +39,4 @@ Unzip and run `NESticle.exe`. Requires `gui.vol`, `nes.pal`, and `SDL2.dll` in t
 NESticle is (c) Bloodlust Software / Icer Addis. This is a restoration made in good faith. If the original author objects, this repository will be taken down.
 
 - fake6502: public domain
-- SDL2: zlib license
+- SDL3: zlib license

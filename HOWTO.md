@@ -4,20 +4,18 @@
 
 - **Visual Studio 2022** with C++ desktop development workload
 - **CMake 3.20+**
-- **SDL2** development libraries for Windows
-  - Download from https://github.com/libsdl-org/SDL/releases
-  - Extract to a known location (e.g. `C:\libs\SDL2`)
+- Vendored **SDL3** source under `external/SDL3-3.4.10/`
 
 ## Build
 
 ```bash
-# Configure (point to SDL2 if not in system path)
-cmake -B build -G "Visual Studio 17 2022" -DCMAKE_PREFIX_PATH="C:\libs\SDL2"
+# Configure
+cmake -B build-sdl3 -G "Visual Studio 17 2022"
 
 # Build
-cmake --build build --config Release
+cmake --build build-sdl3 --config Release
 
-# Output binary will be in build/Release/
+# Output binary will be in build-sdl3/Release/
 ```
 
 ## Run
@@ -33,6 +31,8 @@ NESticle.exe path/to/game.nes
 ### Required Data Files
 - `gui.vol` -- GUI graphics resource (must be in working directory)
   - Without this file, the GUI will not render
+- `NESticle.pal` -- default palette file
+- `SDL3.dll` -- SDL3 runtime copied beside `NESticle.exe` by the build
 
 ## Controls
 
@@ -48,9 +48,9 @@ NESticle.exe path/to/game.nes
 | Escape | Exit fullscreen / Toggle GUI |
 | Space | Maximize/restore emulator window |
 
-### Gamepad (SDL GameController)
+### Gamepad (SDL3 Gamepad)
 - D-pad and left stick for directional input
-- Default button mapping: A=NES B, B=NES A, Back=Select, Start=Start
+- Default button mapping: South=NES B, East=NES A, Back=Select, Start=Start
 - Remap buttons via Settings -> Redefine input -> select gamepad -> "Redefine buttons..."
 
 ### Remapping Controls
@@ -64,7 +64,7 @@ Source/
   *.CPP, *.H           Core emulator source
   m6502/                6502 CPU (fake6502 + shim)
   asm_replacements.cpp  C versions of ASM blitters
-  platform_sdl2.cpp     SDL2 platform backend
+  platform_sdl3.cpp     SDL3 platform backend
   INPUT.CPP/H           Input device management + gamepad
   INPUTW.CPP            Input config dialogs + button remapping UI
   NESSOUND.CPP/H        APU with nonlinear mixer

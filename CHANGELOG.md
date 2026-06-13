@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Added
+- **SDL3 backend**: Vendored SDL 3.4.10 and moved the active platform backend to `platform_sdl3.cpp`.
+- **SDL3 audio stream path**: Replaced SDL2 audio device callback setup with an SDL3 audio stream callback fed by the existing emulator ring buffer.
+
+### Changed
+- **Build output**: New SDL3 build tree convention is `build-sdl3/`, with `SDL3.dll` copied beside `NESticle.exe`.
+- **Gamepad APIs**: Ported SDL GameController usage to SDL3 Gamepad APIs while keeping the same NES button behavior and remapping UI.
+
 ## [0.5.0] - 2026-03-17
 
 ### Added
