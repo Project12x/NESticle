@@ -33,6 +33,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **GUI focus/click hardening**: Edit boxes, list boxes, and window body clicks now claim focus consistently, and destroyed modal/captured widgets clear stale mouse pointers.
 - **Dump file failures**: RAM and ROM dump menu actions now report create/write failures instead of silently claiming success.
 - **Image/font file hardening**: Bitmap and font helpers now fail cleanly on missing, unreadable, or unwritable files instead of dereferencing null or ignoring write failures.
+- **Palette load hardening**: Short or unreadable palette files no longer partially overwrite the built-in fallback palette.
 
 ## [0.5.0] - 2026-03-17
 

@@ -57,8 +57,17 @@ extern int blah, blah2;
 extern char palfile[];
 void initializenespalette() {
   FILEIO f;
-  f.open(palfile);
-  f.read(nespal, 256 * 3);
+  if (f.open(palfile)) {
+    msg.error("Unable to open palette %s; using built-in palette", palfile);
+    return;
+  }
+  COLOR pal[256];
+  if (f.read(pal, 256 * 3)) {
+    f.close();
+    msg.error("Unable to read palette %s; using built-in palette", palfile);
+    return;
+  }
+  memcpy(nespal, pal, 256 * 3);
   f.close();
   // msg.printf(2,"NES Palette initialized");
 }
