@@ -92,10 +92,10 @@
 - [ ] Clarify save, palette, snapshot, and battery-backed RAM failures
 
 ## Phase 15: Settings Durability [PLANNED]
-- [ ] Version and validate config files
-- [ ] Tolerate missing, old, short, oversized, or corrupt configs
-- [ ] Save config atomically via temp-and-replace
-- [ ] Avoid silently resetting valid user input mappings
+- [x] Version and validate config files
+- [x] Tolerate missing, old, short, oversized, or corrupt configs
+- [x] Save config atomically via temp-and-replace
+- [x] Avoid silently resetting valid user input mappings
 
 ## Phase 16: Save-State Hardening [PLANNED]
 - [ ] Add save-state magic, version, payload size, mapper id, and flags

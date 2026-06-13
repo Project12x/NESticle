@@ -2,11 +2,45 @@
 #include <string.h>
 #include <stdio.h>
 #include <malloc.h>
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
 
 #include "input.h"
 #include "config.h"
 #include "file.h"
 #include "message.h"
+
+static int validinputtype(int type) {
+ return type>=ID_NONE && type<=ID_GAMEPAD2;
+}
+
+static int validpadbutton(int button) {
+ return button>=0 && button<=31;
+}
+
+static int validpadmap(const padmap &pm) {
+ return pm.nesStart!=0 &&
+        validpadbutton(pm.nesB) &&
+        validpadbutton(pm.nesA) &&
+        validpadbutton(pm.nesSelect) &&
+        validpadbutton(pm.nesStart);
+}
+
+static void normalizeconfig(config &c) {
+ c.version=CONFIGVERSION;
+
+ config defaults;
+ for (int i=0; i<4; i++)
+  if (!validinputtype(c.pinput[i]))
+   c.pinput[i]=defaults.pinput[i];
+
+ for (int i=0; i<2; i++)
+  {
+   if (!validpadmap(c.ids.pm[i]))
+    c.ids.pm[i]=defpadmap;
+  }
+}
 
 config::config()
 {
@@ -29,10 +63,26 @@ int config::load(char *file)
  FILEIO f;
  if (f.open(file)) return 0;
 
-// printf("reading %p %d %d\n",this,sizeof(config),_msize(this));
- f.read(this,sizeof(config));
-// printf("readed %p\n",this);
+ unsigned bytes=f.size();
+ if (bytes<sizeof(int))
+  {
+   f.close();
+   msg.error("Config file %s is too short; using defaults",file);
+   return 0;
+  }
+
+ config loaded;
+ unsigned readbytes=bytes<sizeof(config) ? bytes : sizeof(config);
+ if (f.read(&loaded,readbytes))
+  {
+   f.close();
+   msg.error("Unable to read config %s; using defaults",file);
+   return 0;
+  }
  f.close();
+
+ normalizeconfig(loaded);
+ memcpy(this,&loaded,sizeof(config));
  msg.printf(2,"Config loaded from %s",file);
  return 1;
 }
@@ -41,13 +91,40 @@ int config::load(char *file)
 void config::save(char *file)
 {
  FILEIO f;
- if (f.create(file))
+ char tmpfile[512];
+ snprintf(tmpfile,sizeof(tmpfile),"%s.tmp",file);
+
+ if (f.create(tmpfile))
   {
    msg.error("unable to save config %s",file);
    return;
   }
- f.write(this,sizeof(config));
+ if (f.write(this,sizeof(config)))
+  {
+   f.close();
+   remove(tmpfile);
+   msg.error("unable to write config %s",file);
+   return;
+  }
  f.close();
+
+#ifdef _MSC_VER
+ if (!MoveFileExA(tmpfile,file,MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH))
+  {
+   remove(tmpfile);
+   msg.error("unable to replace config %s",file);
+   return;
+  }
+#else
+ remove(file);
+ if (rename(tmpfile,file))
+  {
+   remove(tmpfile);
+   msg.error("unable to replace config %s",file);
+   return;
+  }
+#endif
+
  msg.printf(2,"Config saved to %s",file);
 }
 
