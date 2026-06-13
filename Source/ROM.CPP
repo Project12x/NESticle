@@ -648,7 +648,7 @@ void m_savestate() {
   if (!nv)
     return;
 
-  char s[64];
+  char s[sizeof(romfilename) + 4];
   if (!nesticle_make_state_path(romfilename, s, sizeof(s))) {
     msg.error("Unable to create state filename for %s", romfilename);
     return;
@@ -685,7 +685,7 @@ void m_loadstate() {
   if (!nv)
     return;
 
-  char s[64];
+  char s[sizeof(romfilename) + 4];
   if (!nesticle_make_state_path(romfilename, s, sizeof(s))) {
     msg.error("Unable to open state filename for %s", romfilename);
     return;

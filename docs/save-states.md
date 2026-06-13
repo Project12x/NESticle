@@ -14,6 +14,8 @@ New save states start with:
 
 The loader validates the header before changing emulator state. Missing, old, truncated, wrong-version, wrong-size, or wrong-mapper state files are rejected cleanly and the running emulator is left unchanged.
 
+Pre-hardening raw `nesstate` blobs without the `NSTA` header are intentionally rejected. There is no safe way to distinguish every old raw state from a corrupt or wrong-build file before reading it into emulator state, so the restoration-safe behavior is to fail closed and keep the running ROM unchanged.
+
 ## Payload
 
 The payload captures:

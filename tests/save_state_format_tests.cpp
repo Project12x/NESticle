@@ -36,6 +36,18 @@ int main() {
                                hdr, sizeof(nesticle_state_header) + 1233, 4,
                                1234));
 
+  hdr.payload_size = 1234;
+  hdr.mapper = 5;
+  failures += expect_false("mapper mismatch is rejected",
+                           nesticle_valid_state_header(
+                               hdr, sizeof(nesticle_state_header) + 1234, 4,
+                               1234));
+
+  nesticle_init_state_header(hdr, 1234, 4);
+  hdr.magic[0] = 0;
+  failures += expect_false("legacy raw state without NSTA header is rejected",
+                           nesticle_valid_state_header(hdr, 1234, 4, 1234));
+
   char path[64];
   failures += expect_true("state path fits normal ROM names",
                           nesticle_make_state_path("mario", path,
@@ -49,6 +61,14 @@ int main() {
   failures += expect_false("state path rejects overflowing ROM names",
                            nesticle_make_state_path(long_name, path,
                                                     sizeof(path)));
+
+  char max_name[512];
+  std::memset(max_name, 'B', sizeof(max_name));
+  max_name[sizeof(max_name) - 1] = 0;
+  char max_path[516];
+  failures += expect_true("state path accepts full romfilename buffer",
+                          nesticle_make_state_path(max_name, max_path,
+                                                   sizeof(max_path)));
 
   return failures ? 1 : 0;
 }

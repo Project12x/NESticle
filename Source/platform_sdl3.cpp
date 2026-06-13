@@ -595,12 +595,10 @@ void primaryoutput(short *buf, int nums) {
   if (sdl_audio_stream)
     SDL_LockAudioStream(sdl_audio_stream);
   for (int i = 0; i < nums; i++) {
-    int next_write_pos =
-        nesticle_audio_ring_next(primary_write_pos, PRIMARY_BUF_SIZE);
-    if (next_write_pos == primary_read_pos)
+    if (!nesticle_audio_ring_push(primary_buf, PRIMARY_BUF_SIZE,
+                                  &primary_write_pos, primary_read_pos,
+                                  buf[i]))
       audio_overrun_samples.fetch_add(1, std::memory_order_relaxed);
-    primary_buf[primary_write_pos] = buf[i];
-    primary_write_pos = next_write_pos;
   }
   if (sdl_audio_stream)
     SDL_UnlockAudioStream(sdl_audio_stream);
