@@ -361,9 +361,19 @@ void m_ramdump() {
   }
 
   FILEIO f;
-  f.create(s);
-  f.write(ram, 0x8000);
-  f.write(m6502rom + 0x8000, 0x8000);
+  if (f.create(s)) {
+    msg.error("Unable to create RAM dump %s", s);
+    fprintf(stderr, "[DUMP] create failed: '%s'\n", s);
+    fflush(stderr);
+    return;
+  }
+  if (f.write(ram, 0x8000) || f.write(m6502rom + 0x8000, 0x8000)) {
+    f.close();
+    msg.error("Unable to write RAM dump %s", s);
+    fprintf(stderr, "[DUMP] write failed: '%s'\n", s);
+    fflush(stderr);
+    return;
+  }
   f.close();
 
   msg.printf(1, "RAM dumped to %s", s);
@@ -378,8 +388,19 @@ void m_romdump() {
   for (int i = 0; i < numrom; i++) {
     sprintf(s, "%s.R%02X", romfilename, i);
     FILEIO f;
-    f.create(s);
-    f.write(ROM[i], sizeof(ROMPAGE));
+    if (f.create(s)) {
+      msg.error("Unable to create ROM dump %s", s);
+      fprintf(stderr, "[DUMP] create failed: '%s'\n", s);
+      fflush(stderr);
+      return;
+    }
+    if (f.write(ROM[i], sizeof(ROMPAGE))) {
+      f.close();
+      msg.error("Unable to write ROM dump %s", s);
+      fprintf(stderr, "[DUMP] write failed: '%s'\n", s);
+      fflush(stderr);
+      return;
+    }
     f.close();
   }
   msg.printf(1, "ROM dumped to %s.Rxx", romfilename);

@@ -31,6 +31,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **ROM dialog path handling**: The retro loader now strips extensions only from the filename portion, shows clipped long entries with `...`, and keeps command-line run/restore flows from advancing after a failed ROM load.
 - **Gamepad deadzone tuning**: SDL3 gamepad inputs now persist a per-player deadzone value in the retro input dialog, and `--dev-log` reports duplicate NES button mappings.
 - **GUI focus/click hardening**: Edit boxes, list boxes, and window body clicks now claim focus consistently, and destroyed modal/captured widgets clear stale mouse pointers.
+- **Dump file failures**: RAM and ROM dump menu actions now report create/write failures instead of silently claiming success.
 
 ## [0.5.0] - 2026-03-17
 
