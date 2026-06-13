@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Phase
-**Next: Compatibility Characterization** — The SDL3 improvement branch is feature-complete for packaging, reliability, settings, diagnostics, input, timing/audio stability, and save-state hardening. The next roadmap focus is measured compatibility work: known-ROM matrices, mapper priorities, timing/PPU regression evidence, and release-candidate discipline while preserving NESticle's retro UI and visible quirks.
+**Next: Compatibility Characterization** — The SDL3 improvement branch is feature-complete for packaging, reliability, settings, diagnostics, input, timing/audio stability, and save-state hardening. The next roadmap focus is measured compatibility work: known-ROM matrices, mapper priorities, timing/PPU evidence, and release-candidate discipline while preserving NESticle's retro UI, sound, palette look, timing feel, and visible quirks.
 
 ## Build Status
 - **Compiles**: Yes (MSVC 2022, CMake, SDL3)
@@ -29,6 +29,9 @@
 | Fullscreen | Done | ALT+ENTER toggle, SDL logical scaling |
 | Release packaging | Done | Deterministic SDL3 zip with assets, docs, and license notes |
 | Compatibility matrix | Planned | Manual known-ROM evidence, no bundled ROMs |
+
+## Preservation Boundary
+NESticle's 1990s behavior is part of the product. Do not chase hardware-perfect audio, palette, timing, or UI behavior as a goal by itself. Treat odd sound, color, and glitch signatures as expected unless they are tied to a crash, corruption, host-platform failure, or a documented game-running compatibility blocker.
 
 ## Dependencies
 - SDL3 (zlib license)

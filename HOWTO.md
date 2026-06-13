@@ -100,7 +100,8 @@ Use `docs/verification.md` before tagging or sharing a release package.
 2. Run with `--dev-log` when diagnosing mapper, timing, audio, input, or package behavior.
 3. Classify any failure before changing code: mapper, CPU, PPU, APU, input, timing, save, or host-platform.
 4. For non-trivial mapper/timing work, inspect permissively licensed reference implementations at pinned commits and record the reuse mode.
-5. Keep fixes scoped to the existing seams: `MMC.CPP/.H` for mappers, lowercase shim files for host work, and uppercase original files only when the behavior fix requires it.
+5. Decide whether the observed behavior is actually a bug for this project. NESticle-specific sound, palette, timing, UI, and glitch signatures should stay unless they cause crashes, corruption, host failures, or a documented game-running blocker.
+6. Keep fixes scoped to the existing seams: `MMC.CPP/.H` for mappers, lowercase shim files for host work, and uppercase original files only when the behavior fix requires it.
 
 ## Developer Diagnostics
 

@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **SDL3 audio stream path**: Replaced SDL2 audio device callback setup with an SDL3 audio stream callback fed by the existing emulator ring buffer.
 - **Release package target**: Added `package_release`, which stages the SDL3 runtime layout and creates a deterministic release zip with license and provenance notes.
 - **Manual verification checklist**: Added `docs/verification.md` for release smoke checks across startup, packaging, ROM loading, input, audio, settings, and save states.
-- **Forward roadmap**: Added compatibility, mapper, timing/PPU, audio/input verification, and release-candidate phases after the completed SDL3 improvement work.
+- **Forward roadmap**: Added preservation-bounded compatibility, mapper, timing/PPU, audio/input verification, and release-candidate phases after the completed SDL3 improvement work.
 - **Startup asset validation**: Added clear preflight checks for `gui.vol` and `NESticle.pal` before the original initialization path runs.
 - **Developer diagnostics flag**: Added `--dev-log` / `--diagnostics` for off-by-default SDL3 audio, timing, and gamepad diagnostics.
 - **Release docs**: Release packages now include manual verification and save-state compatibility docs.

@@ -1,5 +1,9 @@
 # Roadmap
 
+## Preservation Rule
+
+This project is a restoration-minded port, not a correctness rewrite. Future roadmap work must preserve NESticle's 1990s personality: its retro UI, sound character, palette look, timing feel, and visible emulator quirks. Do not "fix" odd behavior merely because another emulator, hardware capture, or modern accuracy test differs. Change behavior only for crashes, memory/resource bugs, bad host integration, corrupt persistence, unsupported-file handling, or a clearly documented compatibility blocker that prevents a game from running.
+
 ## Phase 0: Analysis & Planning [COMPLETE]
 - [x] Clone and explore repository
 - [x] Identify all source files and dependencies
@@ -118,7 +122,7 @@
 - [ ] Build a known-ROM compatibility matrix without bundling ROMs
 - [ ] Record mapper, mirroring, trainer, battery, region, and observed behavior for each manual test
 - [ ] Classify failures as mapper, CPU, PPU, APU, input, timing, save, or host-platform issues
-- [ ] Preserve NESticle-visible quirks unless a crash, corruption, or documented incompatibility is being fixed
+- [ ] Record NESticle-specific sound, palette, timing, and UI quirks as expected behavior unless they cause crashes, corruption, or a documented compatibility blocker
 
 ## Phase 20: Mapper Coverage Expansion [PLANNED]
 - [ ] Prioritize mapper additions from the compatibility matrix instead of popularity alone
@@ -128,12 +132,12 @@
 
 ## Phase 21: Timing And PPU Regression Workbench [PLANNED]
 - [ ] Add developer-only frame, scanline, sprite-0, and IRQ trace modes
-- [ ] Compare behavior against accepted NES test ROM results without changing default presentation
-- [ ] Document each timing fix with the ROM/test that motivated it
-- [ ] Avoid broad cycle-accuracy rewrites unless a specific compatibility failure requires them
+- [ ] Compare behavior against accepted NES test ROM results for diagnosis, not as a blanket mandate to erase NESticle quirks
+- [ ] Document each timing change with the ROM/test that motivated it and the NESticle behavior intentionally preserved
+- [ ] Avoid broad cycle-accuracy rewrites unless a specific game-running failure requires them
 
 ## Phase 22: Audio And Input Verification Depth [PLANNED]
-- [ ] Add repeatable audio underrun and buffer-stability checks for long sessions
+- [ ] Add repeatable audio underrun and buffer-stability checks for long sessions without changing NESticle's sound signature
 - [ ] Document host audio device, sample rate, and buffer behavior in verification notes
 - [ ] Expand gamepad verification across XInput, DirectInput, Bluetooth, and hotplug cases
 - [ ] Keep NES controller semantics and retro remap UI unchanged

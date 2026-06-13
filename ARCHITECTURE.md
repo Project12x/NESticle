@@ -96,13 +96,14 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 - Lowercase shim files are the preferred home for host-platform work, diagnostics, packaging support, and SDL3 integration.
 - New mapper work belongs in `MMC.CPP/.H`; helper code should stay small and isolated.
 - Developer diagnostics must remain off by default and outside the retro UI unless explicitly enabled.
-- Compatibility fixes need evidence: a known ROM/test, mapper number, region/timing expectation, and observed failure.
+- NESticle's sound character, palette look, timing feel, retro UI, and visible quirks are preservation targets.
+- Compatibility fixes need evidence: a known ROM/test, mapper number, region/timing expectation, observed failure, and a note on which NESticle-visible behavior is intentionally preserved.
 
 ## Forward Roadmap Seams
 
 - **Compatibility matrix**: captures ROM/test name, mapper, mirroring, battery/trainer flags, observed behavior, and pass/fail notes.
 - **Mapper expansion**: starts from compatibility failures and references permissively licensed upstream source at pinned commits before implementation.
-- **Timing/PPU workbench**: adds developer-only traces for frame, scanline, sprite-0, IRQ, and frame pacing behavior.
+- **Timing/PPU workbench**: adds developer-only traces for frame, scanline, sprite-0, IRQ, and frame pacing behavior without making cycle accuracy a blanket goal.
 - **Release candidates**: depend on deterministic package hashes plus extracted-package startup, input, audio, settings, ROM, and save-state smoke checks.
 
 ## Data Flow (Per Frame)

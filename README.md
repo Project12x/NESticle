@@ -33,12 +33,12 @@ Unzip and run `NESticle.exe`. Requires `gui.vol`, `NESticle.pal`, and `SDL3.dll`
 
 The SDL3 improvement branch is feature-complete for the first modernization pass: deterministic packaging, startup/shutdown hardening, settings durability, save-state validation, developer diagnostics, gamepad durability, and ROM/file UX polish.
 
-Next work is compatibility-driven:
+Next work is compatibility-driven, but bounded by preservation. The goal is not to make NESticle behave like a modern accuracy emulator. Its 90s sound, palette look, retro UI, timing feel, and recognizable glitches are part of the port.
 
 - Build a known-ROM compatibility matrix without bundling ROMs
-- Prioritize mapper additions from observed failures
-- Add developer-only timing/PPU regression traces
-- Deepen audio and input verification across host devices
+- Prioritize mapper additions from observed game-running failures
+- Add developer-only timing/PPU traces for diagnosis, not blanket behavior rewrites
+- Deepen audio and input verification across host devices while preserving NESticle's sound signature
 - Record release-candidate evidence before tagging
 
 ## Known Issues
@@ -46,6 +46,7 @@ Next work is compatibility-driven:
 - APU sound is the original NESticle core — not cycle-accurate
 - ~8 mappers supported (MMC 0-7)
 - Compatibility evidence is still manual and ROM-by-ROM
+- Palette and sound differences from other emulators may be intentional NESticle signatures
 
 ## License
 
