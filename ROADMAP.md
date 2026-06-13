@@ -58,3 +58,58 @@
 - [x] Frame-based gamepad button polling
 - [x] NES hardware nonlinear mixer
 - [x] Psychoacoustic noise attenuation
+
+## Phase 10: SDL3 Backend Migration [PLANNED]
+- [ ] Replace SDL2 as the default backend with SDL3 on the improvement branch
+- [ ] Preserve palettized framebuffer behavior, nearest-neighbor scaling, and retro fullscreen semantics
+- [ ] Port SDL audio callback usage to SDL3 audio streams
+- [ ] Port SDL GameController usage to SDL3 gamepad APIs
+- [ ] Update CMake and runtime DLL copy rules for vendored SDL3
+
+## Phase 11: Reliability Hardening [PLANNED]
+- [ ] Harden startup asset checks and failure messages
+- [ ] Fix shutdown order, resource leaks, and null/lifetime hazards
+- [ ] Improve GUI focus/click edge cases without changing visual style
+- [ ] Harden fullscreen transitions and bad-path handling
+- [ ] Validate file create/read/write failures before mutating state
+
+## Phase 12: Timing & Audio Stability [PLANNED]
+- [ ] Add SDL3 audio underrun/overrun counters
+- [ ] Handle audio pause/resume and device recovery
+- [ ] Bound host-frame catch-up behavior after stalls
+- [ ] Keep existing emulator timing constants as the compatibility baseline
+
+## Phase 13: Input & Gamepad Durability [PLANNED]
+- [ ] Add SDL3 gamepad hotplug handling
+- [ ] Improve multiple-controller discovery and assignment
+- [ ] Preserve remaps across reconnects and enumeration changes
+- [ ] Add deadzone tuning and mapping conflict diagnostics
+
+## Phase 14: ROM & File UX Polish [PLANNED]
+- [ ] Keep the retro ROM dialog while improving path handling
+- [ ] Remember last ROM directory and recent ROMs
+- [ ] Improve long filename clipping and failed-load messages
+- [ ] Clarify save, palette, snapshot, and battery-backed RAM failures
+
+## Phase 15: Settings Durability [PLANNED]
+- [ ] Version and validate config files
+- [ ] Tolerate missing, old, short, oversized, or corrupt configs
+- [ ] Save config atomically via temp-and-replace
+- [ ] Avoid silently resetting valid user input mappings
+
+## Phase 16: Save-State Hardening [PLANNED]
+- [ ] Add save-state magic, version, payload size, mapper id, and flags
+- [ ] Validate state files before mutating emulator state
+- [ ] Reject incompatible state files cleanly
+- [ ] Document captured state and compatibility rules
+
+## Phase 17: Packaging & Verification [PLANNED]
+- [ ] Add deterministic package output with executable, SDL3 DLL, assets, docs, and license notes
+- [ ] Add a manual verification checklist for ROMs, input, audio, fullscreen, config, and state files
+- [ ] Verify launch from both project root and packaged release directory
+
+## Phase 18: Developer Diagnostics [PLANNED]
+- [ ] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
+- [ ] Log mapper, mirroring, trainer, battery, and timing details
+- [ ] Log audio underruns/overruns and input hotplug/remap events
+- [ ] Keep diagnostics out of the retro UI unless explicitly enabled
