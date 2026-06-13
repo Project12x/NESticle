@@ -18,6 +18,14 @@ cmake --build build-sdl3 --config Release
 # Output binary will be in build-sdl3/Release/
 ```
 
+## Package
+
+```bash
+cmake --build build-sdl3 --config Release --target package_release
+```
+
+The package target creates `releases/NESticle-sdl3-Release.zip` with `NESticle.exe`, `SDL3.dll`, `gui.vol`, `NESticle.pal`, `README.md`, `LICENSE`, and third-party license/provenance notes.
+
 ## Run
 
 ```bash
@@ -81,3 +89,7 @@ Source/
 ## Audio Mixer Toggle
 
 The default mixer uses NES hardware DAC formulas (nonlinear). To switch to the original NESticle linear mixer, set `nessound::nonlinear_mixing = 0` in `NESSOUND.CPP`.
+
+## Manual Verification
+
+Use `docs/verification.md` before tagging or sharing a release package.

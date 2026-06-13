@@ -8,6 +8,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 - **SDL3 backend**: Vendored SDL 3.4.10 and moved the active platform backend to `platform_sdl3.cpp`.
 - **SDL3 audio stream path**: Replaced SDL2 audio device callback setup with an SDL3 audio stream callback fed by the existing emulator ring buffer.
+- **Release package target**: Added `package_release`, which stages the SDL3 runtime layout and creates a deterministic release zip with license and provenance notes.
+- **Manual verification checklist**: Added `docs/verification.md` for release smoke checks across startup, packaging, ROM loading, input, audio, settings, and save states.
 
 ### Changed
 - **Build output**: New SDL3 build tree convention is `build-sdl3/`, with `SDL3.dll` copied beside `NESticle.exe`.

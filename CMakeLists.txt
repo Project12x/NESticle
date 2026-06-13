@@ -95,3 +95,19 @@ if(WIN32 AND TARGET SDL3::SDL3-shared)
         VERBATIM
     )
 endif()
+
+set(NESTICLE_PACKAGE_DIR "${CMAKE_SOURCE_DIR}/releases/NESticle-sdl3-$<CONFIG>")
+set(NESTICLE_PACKAGE_ZIP "${CMAKE_SOURCE_DIR}/releases/NESticle-sdl3-$<CONFIG>.zip")
+
+add_custom_target(package_release
+    COMMAND "${CMAKE_COMMAND}"
+        -D "NESTICLE_EXE=$<TARGET_FILE:NESticle>"
+        -D "SDL3_DLL=$<TARGET_FILE:SDL3::SDL3-shared>"
+        -D "SOURCE_DIR=${CMAKE_SOURCE_DIR}"
+        -D "PACKAGE_DIR=${NESTICLE_PACKAGE_DIR}"
+        -D "PACKAGE_ZIP=${NESTICLE_PACKAGE_ZIP}"
+        -P "${CMAKE_SOURCE_DIR}/cmake/package_release.cmake"
+    DEPENDS NESticle
+    COMMENT "Creating deterministic NESticle SDL3 release package"
+    VERBATIM
+)
