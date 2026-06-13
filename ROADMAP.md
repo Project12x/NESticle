@@ -66,49 +66,49 @@
 - [x] Port SDL GameController usage to SDL3 gamepad APIs
 - [x] Update CMake and runtime DLL copy rules for vendored SDL3
 
-## Phase 11: Reliability Hardening [PLANNED]
+## Phase 11: Reliability Hardening [COMPLETE]
 - [x] Harden startup asset checks and failure messages
 - [x] Fix shutdown order, resource leaks, and null/lifetime hazards
 - [x] Improve GUI focus/click edge cases without changing visual style
 - [x] Harden fullscreen transitions and bad-path handling
 - [x] Validate file create/read/write failures before mutating state
 
-## Phase 12: Timing & Audio Stability [PLANNED]
+## Phase 12: Timing & Audio Stability [COMPLETE]
 - [x] Add SDL3 audio underrun/overrun counters
 - [x] Handle audio pause/resume and device recovery
 - [x] Bound host-frame catch-up behavior after stalls
 - [x] Keep existing emulator timing constants as the compatibility baseline
 
-## Phase 13: Input & Gamepad Durability [PLANNED]
+## Phase 13: Input & Gamepad Durability [COMPLETE]
 - [x] Add SDL3 gamepad hotplug handling
 - [x] Improve multiple-controller discovery and assignment
 - [x] Preserve remaps across reconnects and enumeration changes
 - [x] Add deadzone tuning and mapping conflict diagnostics
 
-## Phase 14: ROM & File UX Polish [PLANNED]
+## Phase 14: ROM & File UX Polish [COMPLETE]
 - [x] Keep the retro ROM dialog while improving path handling
 - [x] Remember last ROM directory and recent ROMs
 - [x] Improve long filename clipping and failed-load messages
 - [x] Clarify save, palette, snapshot, and battery-backed RAM failures
 
-## Phase 15: Settings Durability [PLANNED]
+## Phase 15: Settings Durability [COMPLETE]
 - [x] Version and validate config files
 - [x] Tolerate missing, old, short, oversized, or corrupt configs
 - [x] Save config atomically via temp-and-replace
 - [x] Avoid silently resetting valid user input mappings
 
-## Phase 16: Save-State Hardening [PLANNED]
+## Phase 16: Save-State Hardening [COMPLETE]
 - [x] Add save-state magic, version, payload size, mapper id, and flags
 - [x] Validate state files before mutating emulator state
 - [x] Reject incompatible state files cleanly
 - [x] Document captured state and compatibility rules
 
-## Phase 17: Packaging & Verification [PLANNED]
+## Phase 17: Packaging & Verification [COMPLETE]
 - [x] Add deterministic package output with executable, SDL3 DLL, assets, docs, and license notes
 - [x] Add a manual verification checklist for ROMs, input, audio, fullscreen, config, and state files
 - [x] Verify launch from both project root and packaged release directory
 
-## Phase 18: Developer Diagnostics [PLANNED]
+## Phase 18: Developer Diagnostics [COMPLETE]
 - [x] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
 - [x] Log mapper, mirroring, trainer, battery, and timing details
 - [x] Log audio underruns/overruns and input hotplug/remap events

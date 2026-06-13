@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Phase
-**v0.5.0 — Feature Complete** — NESticle runs on modern Windows with full GUI, gamepad support, and hardware-accurate audio mixing.
+**SDL3 improvement branch — Feature Complete** — NESticle runs on modern Windows with SDL3, deterministic packaging, hardened settings/save-state/file handling, developer diagnostics, gamepad durability, and the original retro UI behavior preserved.
 
 ## Build Status
 - **Compiles**: Yes (MSVC 2022, CMake, SDL3)
