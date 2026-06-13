@@ -104,6 +104,11 @@ void GUIrect::unlink() {
 GUIrect::~GUIrect() {
   while (child)
     delete child;
+  extern mouse m;
+  if (m.capture == this)
+    m.capture = 0;
+  if (modal == this)
+    modal = 0;
   // Clear parent's lastfocus if it points to us to prevent dangling pointer
   if (parent && parent->lastfocus == this)
     parent->lastfocus = 0;
@@ -425,7 +430,10 @@ GUIedit::GUIedit(GUIrect *p, char *pmpt, int x, int y, int xw)
 GUIrect *GUIedit::hittest(int x, int y) {
   return disabled ? 0 : GUIrect::hittest(x, y);
 }
-GUIrect *GUIedit::click(mouse &m) { return this; }
+GUIrect *GUIedit::click(mouse &m) {
+  setfocus(this);
+  return this;
+}
 void GUIedit::draw(char *dest) {
   if (font[FNT_EDITPROMPT])
     font[FNT_EDITPROMPT]->draw(prompt, dest, x1, y1);
@@ -638,6 +646,8 @@ GUIrect *GUIbox::click(mouse &m) {
   GUIrect *h = GUIrect::hittest(m.x, m.y);
   if (h && h != this)
     return h->click(m);
+
+  setfocus(this);
 
   // Hit-test the bottom right corner for resizing (12x12 active area)
   if (m.x >= x2 - 12 && m.y >= y2 - 12) {
@@ -1141,6 +1151,7 @@ GUIrect *GUIlistbox::click(mouse &m) {
   GUIrect *h = GUIrect::hittest(m.x, m.y);
   if (h && h != this)
     return h->click(m);
+  setfocus(this);
   depressed = 1;
   int item = (m.y - y1) / itemheight + scroll->getpos();
   if (item >= 0 && item < numitems) {
