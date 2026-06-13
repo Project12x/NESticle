@@ -101,6 +101,7 @@ The SDL3 branch includes small CMake regression harnesses for host-side persiste
 ```powershell
 cmake --build build-sdl3 --config Debug --target save_state_format_tests
 cmake --build build-sdl3 --config Debug --target config_format_tests
+cmake --build build-sdl3 --config Debug --target audio_ring_tests
 ctest --test-dir build-sdl3 -C Debug --output-on-failure
 ```
 

@@ -44,6 +44,7 @@ static LONG WINAPI crash_handler(EXCEPTION_POINTERS *ep) {
 // NESticle headers
 #include "command.h"
 #include "config.h"
+#include "audio_ring.h"
 #include "cursor_frames.h"
 #include "dd.h"
 #include "guivol.h"
@@ -580,24 +581,37 @@ static int primary_read_pos = 0;
 unsigned char soundinstalled = 0;
 
 void clearprimary() {
+  if (sdl_audio_stream)
+    SDL_LockAudioStream(sdl_audio_stream);
   memset(primary_buf, 0, sizeof(primary_buf));
   primary_write_pos = primary_read_pos = 0;
+  if (sdl_audio_stream)
+    SDL_UnlockAudioStream(sdl_audio_stream);
 }
 
 void primaryoutput(short *buf, int nums) {
   if (nums > 0)
     audio_has_output.store(1, std::memory_order_relaxed);
+  if (sdl_audio_stream)
+    SDL_LockAudioStream(sdl_audio_stream);
   for (int i = 0; i < nums; i++) {
-    int next_write_pos = (primary_write_pos + 1) % PRIMARY_BUF_SIZE;
+    int next_write_pos =
+        nesticle_audio_ring_next(primary_write_pos, PRIMARY_BUF_SIZE);
     if (next_write_pos == primary_read_pos)
       audio_overrun_samples.fetch_add(1, std::memory_order_relaxed);
     primary_buf[primary_write_pos] = buf[i];
     primary_write_pos = next_write_pos;
   }
+  if (sdl_audio_stream)
+    SDL_UnlockAudioStream(sdl_audio_stream);
 }
 
 void primaryskip(int nums) {
+  if (sdl_audio_stream)
+    SDL_LockAudioStream(sdl_audio_stream);
   primary_write_pos = (primary_write_pos + nums) % PRIMARY_BUF_SIZE;
+  if (sdl_audio_stream)
+    SDL_UnlockAudioStream(sdl_audio_stream);
 }
 
 static void SDLCALL sdl_audio_stream_callback(void *userdata,
@@ -624,7 +638,8 @@ static void SDLCALL sdl_audio_stream_callback(void *userdata,
   for (int i = 0; i < samples; i++) {
     if (primary_read_pos != primary_write_pos) {
       out[i] = primary_buf[primary_read_pos];
-      primary_read_pos = (primary_read_pos + 1) % PRIMARY_BUF_SIZE;
+      primary_read_pos =
+          nesticle_audio_ring_next(primary_read_pos, PRIMARY_BUF_SIZE);
     } else {
       out[i] = 0;
       if (audio_has_output.load(std::memory_order_relaxed)) {

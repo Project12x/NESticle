@@ -57,6 +57,7 @@ set(NESTICLE_SOURCES
     Source/PROF.CPP
     Source/SNAPSHOT.CPP
     Source/DISASM.CPP
+    Source/audio_ring.cpp
     Source/config_format.cpp
     Source/save_state_format.cpp
 )
@@ -105,6 +106,17 @@ target_include_directories(config_format_tests PRIVATE
 )
 
 add_test(NAME config_format_tests COMMAND config_format_tests)
+
+add_executable(audio_ring_tests
+    Source/audio_ring.cpp
+    tests/audio_ring_tests.cpp
+)
+
+target_include_directories(audio_ring_tests PRIVATE
+    Source
+)
+
+add_test(NAME audio_ring_tests COMMAND audio_ring_tests)
 
 # On Windows, link with WinMM for timeGetTime compatibility stubs
 if(WIN32)
