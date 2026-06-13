@@ -76,8 +76,8 @@
 ## Phase 12: Timing & Audio Stability [PLANNED]
 - [x] Add SDL3 audio underrun/overrun counters
 - [x] Handle audio pause/resume and device recovery
-- [ ] Bound host-frame catch-up behavior after stalls
-- [ ] Keep existing emulator timing constants as the compatibility baseline
+- [x] Bound host-frame catch-up behavior after stalls
+- [x] Keep existing emulator timing constants as the compatibility baseline
 
 ## Phase 13: Input & Gamepad Durability [PLANNED]
 - [ ] Add SDL3 gamepad hotplug handling

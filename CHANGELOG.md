@@ -21,6 +21,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Config durability**: Config loading now tolerates short, old, oversized, or partially invalid files, and saves through a temp file before replacing the old config.
 - **Timing/audio counters**: SDL3 audio underrun/overrun and skipped host-frame catch-up ticks are counted without changing the emulator timing constants.
 - **Save-state validation**: Save states now include a small magic/version/size/mapper header and are validated before emulator state is restored.
+- **Frame pacing after stalls**: Host catch-up after long pauses is now bounded without changing NESticle's timing constants.
 
 ## [0.5.0] - 2026-03-17
 

@@ -965,12 +965,21 @@ int main(int argc, char *argv[]) {
       // Timer
       Uint32 now = SDL_GetTicks();
       int numtimer = 0;
-      while (now >= lasttime + (Uint32)(1000 / TIMERSPEED)) {
-        if (++numtimer < 5)
+      Uint32 tick_ms = (Uint32)(1000 / TIMERSPEED);
+      if (tick_ms == 0)
+        tick_ms = 1;
+      if (now >= lasttime + tick_ms) {
+        Uint32 elapsed_ticks = (now - lasttime) / tick_ms;
+        Uint32 ticks_to_run = elapsed_ticks < 4 ? elapsed_ticks : 4;
+        for (Uint32 i = 0; i < ticks_to_run; i++) {
           gametimer();
-        else
-          frame_skip_ticks.fetch_add(1, std::memory_order_relaxed);
-        lasttime += (1000 / TIMERSPEED);
+        }
+        if (elapsed_ticks > ticks_to_run) {
+          frame_skip_ticks.fetch_add(elapsed_ticks - ticks_to_run,
+                                     std::memory_order_relaxed);
+        }
+        lasttime += elapsed_ticks * tick_ms;
+        numtimer = (int)elapsed_ticks;
       }
 
       // Only render if we actually ticked (avoid redundant rendering)
