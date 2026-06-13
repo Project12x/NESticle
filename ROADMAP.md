@@ -68,7 +68,7 @@
 
 ## Phase 11: Reliability Hardening [PLANNED]
 - [x] Harden startup asset checks and failure messages
-- [ ] Fix shutdown order, resource leaks, and null/lifetime hazards
+- [x] Fix shutdown order, resource leaks, and null/lifetime hazards
 - [ ] Improve GUI focus/click edge cases without changing visual style
 - [ ] Harden fullscreen transitions and bad-path handling
 - [ ] Validate file create/read/write failures before mutating state

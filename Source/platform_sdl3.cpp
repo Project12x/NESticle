@@ -86,6 +86,7 @@ static SDL_Texture *sdl_texture = nullptr;
 static Uint32 *sdl_framebuffer = nullptr;
 static unsigned char *sdl_screen = nullptr;
 SDL_Color sdl_palette[256];
+static int windows_timer_period_active = 0;
 
 // Sound
 extern "C" {
@@ -106,12 +107,44 @@ int blah = 0, blah2 = 0;
 void disable() { timerdisabled = 1; }
 void enable() { timerdisabled = 0; }
 void quitgame() { ActiveApp = 0; }
+
+static void shutdown_sdl_platform() {
+  if (sdl_audio_stream) {
+    SDL_DestroyAudioStream(sdl_audio_stream);
+    sdl_audio_stream = nullptr;
+  }
+  if (sdl_texture) {
+    SDL_DestroyTexture(sdl_texture);
+    sdl_texture = nullptr;
+  }
+  if (sdl_renderer) {
+    SDL_DestroyRenderer(sdl_renderer);
+    sdl_renderer = nullptr;
+  }
+  if (sdl_window) {
+    SDL_DestroyWindow(sdl_window);
+    sdl_window = nullptr;
+  }
+  delete[] sdl_screen;
+  sdl_screen = nullptr;
+  delete[] sdl_framebuffer;
+  sdl_framebuffer = nullptr;
+  screen = video = nullptr;
+#ifdef _WIN32
+  if (windows_timer_period_active) {
+    timeEndPeriod(1);
+    windows_timer_period_active = 0;
+  }
+#endif
+  SDL_Quit();
+}
+
 void cleanexit(int x) {
   fprintf(stderr, "[FATAL] cleanexit(%d) called: %s\n", x, errstr);
   fflush(stderr);
   SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "NESticle Error", errstr,
                            nullptr);
-  SDL_Quit();
+  shutdown_sdl_platform();
   exit(x);
 }
 
@@ -684,6 +717,7 @@ int main(int argc, char *argv[]) {
 #ifdef _WIN32
   // Set Windows timer resolution to 1ms for accurate 60Hz frame timing
   timeBeginPeriod(1);
+  windows_timer_period_active = 1;
 #endif
 
   // Auto-detect DPI scale: use 3x for 4K+, 2x otherwise
@@ -710,7 +744,7 @@ int main(int argc, char *argv[]) {
                        SDL_WINDOW_RESIZABLE);
   if (!sdl_window) {
     fprintf(stderr, "SDL_CreateWindow failed: %s\n", SDL_GetError());
-    SDL_Quit();
+    shutdown_sdl_platform();
     return 1;
   }
 
@@ -720,8 +754,7 @@ int main(int argc, char *argv[]) {
   sdl_renderer = SDL_CreateRenderer(sdl_window, nullptr);
   if (!sdl_renderer) {
     fprintf(stderr, "SDL_CreateRenderer failed: %s\n", SDL_GetError());
-    SDL_DestroyWindow(sdl_window);
-    SDL_Quit();
+    shutdown_sdl_platform();
     return 1;
   }
   // Let SDL handle scaling/letterboxing to any window/fullscreen size
@@ -729,9 +762,7 @@ int main(int argc, char *argv[]) {
                                    SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
   if (validate_startup_assets(sdl_window)) {
-    SDL_DestroyRenderer(sdl_renderer);
-    SDL_DestroyWindow(sdl_window);
-    SDL_Quit();
+    shutdown_sdl_platform();
     return 1;
   }
 
@@ -745,8 +776,12 @@ int main(int argc, char *argv[]) {
   sdl_texture =
       SDL_CreateTexture(sdl_renderer, SDL_PIXELFORMAT_ARGB8888,
                         SDL_TEXTUREACCESS_STREAMING, SCREENX, SCREENY);
-  if (sdl_texture)
-    SDL_SetTextureScaleMode(sdl_texture, SDL_SCALEMODE_NEAREST);
+  if (!sdl_texture) {
+    fprintf(stderr, "SDL_CreateTexture failed: %s\n", SDL_GetError());
+    shutdown_sdl_platform();
+    return 1;
+  }
+  SDL_SetTextureScaleMode(sdl_texture, SDL_SCALEMODE_NEAREST);
 
   // Audio
   SDL_AudioSpec want;
@@ -780,7 +815,7 @@ int main(int argc, char *argv[]) {
         SDL_MESSAGEBOX_ERROR, "NESticle",
         "initgame() failed. Make sure gui.vol is in the working directory.",
         sdl_window);
-    SDL_Quit();
+    shutdown_sdl_platform();
     return 1;
   }
   fprintf(stderr, "[LOG] initgame() succeeded\n");
@@ -934,16 +969,6 @@ int main(int argc, char *argv[]) {
   } // end while loop
 
   terminategame();
-  if (sdl_audio_stream)
-    SDL_DestroyAudioStream(sdl_audio_stream);
-  if (sdl_texture)
-    SDL_DestroyTexture(sdl_texture);
-  if (sdl_renderer)
-    SDL_DestroyRenderer(sdl_renderer);
-  if (sdl_window)
-    SDL_DestroyWindow(sdl_window);
-  delete[] sdl_screen;
-  delete[] sdl_framebuffer;
-  SDL_Quit();
+  shutdown_sdl_platform();
   return 0;
 }
