@@ -16,8 +16,8 @@ int __cdecl ReadAnalogJoyButtons();
 
 #endif
 
-#ifdef SDL2
-#include <SDL.h>
+#ifdef SDL3
+#include <SDL3/SDL.h>
 #endif
 
 #include "dd.h"
@@ -286,35 +286,45 @@ unsigned char gravis::gravtable[] = {
     0, 1, 4, 5, 2, 3, 6, 7, 8, 9, 12, 13, 10, 11, 14, 15,
 };
 
-#ifdef SDL2
+#ifdef SDL3
 //-------------------------------
-// SDL2 GameController input
-// Supports XInput and DirectInput via SDL2's unified API
+// SDL3 Gamepad input
+// Supports XInput and DirectInput via SDL3's unified API
 //-------------------------------
 #define GAMEPAD_DEADZONE 8000
 
+static SDL_Gamepad *open_gamepad_slot(int slot) {
+  int count = 0;
+  SDL_JoystickID *gamepads = SDL_GetGamepads(&count);
+  SDL_Gamepad *opened = 0;
+  if (gamepads && slot >= 0 && slot < count && SDL_IsGamepad(gamepads[slot]))
+    opened = SDL_OpenGamepad(gamepads[slot]);
+  if (gamepads)
+    SDL_free(gamepads);
+  return opened;
+}
+
 class sdlgamepad : public input {
-  SDL_GameController *controller;
-  int joystickIndex; // SDL joystick index (from SDL_NumJoysticks)
+  SDL_Gamepad *controller;
+  int joystickSlot;  // slot in SDL_GetGamepads() result
   padmap *pmptr;     // pointer to stored padmap
   padmap pm;         // local working copy
 
 public:
-  sdlgamepad(int type, int sdlJoyIdx)
-      : input(type), joystickIndex(sdlJoyIdx), controller(0) {
+  sdlgamepad(int type, int sdlJoySlot)
+      : input(type), controller(0), joystickSlot(sdlJoySlot) {
     int pmidx = (type == ID_GAMEPAD2) ? 1 : 0;
     pmptr = &ids->pm[pmidx];
     pm = *pmptr;
-    if (SDL_IsGameController(sdlJoyIdx))
-      controller = SDL_GameControllerOpen(sdlJoyIdx);
-    fprintf(stderr, "[INPUT] sdlgamepad created: joyIdx=%d controller=%p\n",
-            sdlJoyIdx, (void *)controller);
+    controller = open_gamepad_slot(joystickSlot);
+    fprintf(stderr, "[INPUT] sdlgamepad created: slot=%d controller=%p\n",
+            joystickSlot, (void *)controller);
     fflush(stderr);
   }
 
   virtual ~sdlgamepad() {
     if (controller) {
-      SDL_GameControllerClose(controller);
+      SDL_CloseGamepad(controller);
       controller = 0;
     }
   }
@@ -332,16 +342,16 @@ public:
     stat &= ~0xF;
 
     int dpadUp =
-        SDL_GameControllerGetButton(controller, SDL_CONTROLLER_BUTTON_DPAD_UP);
-    int dpadDown = SDL_GameControllerGetButton(controller,
-                                               SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-    int dpadLeft = SDL_GameControllerGetButton(controller,
-                                               SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-    int dpadRight = SDL_GameControllerGetButton(
-        controller, SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        SDL_GetGamepadButton(controller, SDL_GAMEPAD_BUTTON_DPAD_UP);
+    int dpadDown =
+        SDL_GetGamepadButton(controller, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+    int dpadLeft =
+        SDL_GetGamepadButton(controller, SDL_GAMEPAD_BUTTON_DPAD_LEFT);
+    int dpadRight =
+        SDL_GetGamepadButton(controller, SDL_GAMEPAD_BUTTON_DPAD_RIGHT);
 
-    int lx = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTX);
-    int ly = SDL_GameControllerGetAxis(controller, SDL_CONTROLLER_AXIS_LEFTY);
+    int lx = SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTX);
+    int ly = SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTY);
 
     if (dpadRight || lx > GAMEPAD_DEADZONE)
       stat |= ID_RIGHT;
@@ -355,13 +365,13 @@ public:
     // NES: B, A, Select, Start — use padmap for button assignment
     oldbut = but;
     unsigned newbut = 0;
-    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesB))
+    if (SDL_GetGamepadButton(controller, (SDL_GamepadButton)pm.nesB))
       newbut |= ID_BUT0;
-    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesA))
+    if (SDL_GetGamepadButton(controller, (SDL_GamepadButton)pm.nesA))
       newbut |= ID_BUT1;
-    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesSelect))
+    if (SDL_GetGamepadButton(controller, (SDL_GamepadButton)pm.nesSelect))
       newbut |= ID_BUT2;
-    if (SDL_GameControllerGetButton(controller, (SDL_GameControllerButton)pm.nesStart))
+    if (SDL_GetGamepadButton(controller, (SDL_GamepadButton)pm.nesStart))
       newbut |= ID_BUT3;
     but = newbut;
     stat |= ((oldbut ^ but) & but);
@@ -369,11 +379,8 @@ public:
 
   virtual void main() {
     if (!controller) {
-      // Attempt reconnect using stored joystick index
-      if (joystickIndex < SDL_NumJoysticks() &&
-          SDL_IsGameController(joystickIndex)) {
-        controller = SDL_GameControllerOpen(joystickIndex);
-      }
+      // Attempt reconnect using stored gamepad slot.
+      controller = open_gamepad_slot(joystickSlot);
     }
   }
 };
@@ -471,7 +478,7 @@ newinputdevice(int idtype) { // if no inputdevicesettings, can't initialize
     return new keyboard1;
   case ID_KEY2:
     return new keyboard2;
-#ifdef SDL2
+#ifdef SDL3
   case ID_GAMEPAD1:
     return new sdlgamepad(ID_GAMEPAD1, 0);
   case ID_GAMEPAD2:
@@ -485,7 +492,7 @@ newinputdevice(int idtype) { // if no inputdevicesettings, can't initialize
 input *newinputdevice(int idtype, int sdlJoyIndex) {
   if (!ids)
     return 0;
-#ifdef SDL2
+#ifdef SDL3
   if (idtype == ID_GAMEPAD1 || idtype == ID_GAMEPAD2)
     return new sdlgamepad(idtype, sdlJoyIndex);
 #endif
