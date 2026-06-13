@@ -40,12 +40,12 @@ keymap defkeymap[2] = {
      0x10, 0x11, 0x12, 0x1E, 0x1F, 0x20},
 };
 
-// Default gamepad button map: SDL A→NES B, SDL B→NES A (Xbox layout)
+// Default gamepad button map: SDL south->NES B, east->NES A (Xbox layout)
 padmap defpadmap = {
-    0, // nesB = SDL_CONTROLLER_BUTTON_A
-    1, // nesA = SDL_CONTROLLER_BUTTON_B
-    4, // nesSelect = SDL_CONTROLLER_BUTTON_BACK
-    6, // nesStart = SDL_CONTROLLER_BUTTON_START
+    0, // nesB = SDL_GAMEPAD_BUTTON_SOUTH
+    1, // nesA = SDL_GAMEPAD_BUTTON_EAST
+    4, // nesSelect = SDL_GAMEPAD_BUTTON_BACK
+    6, // nesStart = SDL_GAMEPAD_BUTTON_START
 };
 
 // refresh during keypress
