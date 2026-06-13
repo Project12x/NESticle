@@ -74,8 +74,8 @@
 - [ ] Validate file create/read/write failures before mutating state
 
 ## Phase 12: Timing & Audio Stability [PLANNED]
-- [ ] Add SDL3 audio underrun/overrun counters
-- [ ] Handle audio pause/resume and device recovery
+- [x] Add SDL3 audio underrun/overrun counters
+- [x] Handle audio pause/resume and device recovery
 - [ ] Bound host-frame catch-up behavior after stalls
 - [ ] Keep existing emulator timing constants as the compatibility baseline
 
@@ -109,7 +109,7 @@
 - [x] Verify launch from both project root and packaged release directory
 
 ## Phase 18: Developer Diagnostics [PLANNED]
-- [ ] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
+- [x] Add off-by-default diagnostics for startup, assets, SDL3 devices, and config
 - [ ] Log mapper, mirroring, trainer, battery, and timing details
-- [ ] Log audio underruns/overruns and input hotplug/remap events
-- [ ] Keep diagnostics out of the retro UI unless explicitly enabled
+- [x] Log audio underruns/overruns and input hotplug/remap events
+- [x] Keep diagnostics out of the retro UI unless explicitly enabled

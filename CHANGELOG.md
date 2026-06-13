@@ -11,6 +11,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Release package target**: Added `package_release`, which stages the SDL3 runtime layout and creates a deterministic release zip with license and provenance notes.
 - **Manual verification checklist**: Added `docs/verification.md` for release smoke checks across startup, packaging, ROM loading, input, audio, settings, and save states.
 - **Startup asset validation**: Added clear preflight checks for `gui.vol` and `NESticle.pal` before the original initialization path runs.
+- **Developer diagnostics flag**: Added `--dev-log` / `--diagnostics` for off-by-default SDL3 audio, timing, and gamepad diagnostics.
 
 ### Changed
 - **Build output**: New SDL3 build tree convention is `build-sdl3/`, with `SDL3.dll` copied beside `NESticle.exe`.
@@ -18,6 +19,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **SDL3 shutdown path**: Centralized SDL cleanup, restored the Windows timer period on exit, and fail cleanly if the primary texture cannot be created.
 - **ROM load failures**: ROM files are now staged in temporary allocations and validated before replacing the current running ROM state.
 - **Config durability**: Config loading now tolerates short, old, oversized, or partially invalid files, and saves through a temp file before replacing the old config.
+- **Timing/audio counters**: SDL3 audio underrun/overrun and skipped host-frame catch-up ticks are counted without changing the emulator timing constants.
 
 ## [0.5.0] - 2026-03-17
 

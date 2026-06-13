@@ -4,6 +4,7 @@
 
 // WIN95 is defined globally by CMake
 #include <SDL3/SDL.h>
+#include <atomic>
 #include <cctype>
 #include <cstdarg>
 #include <cstdio>
@@ -80,6 +81,7 @@ static int ActiveApp = 1;
 
 // Globals
 static int sdl_scale = 2; // DPI scale factor (auto-detected)
+static int developer_diagnostics = 0;
 static SDL_Window *sdl_window = nullptr;
 static SDL_Renderer *sdl_renderer = nullptr;
 static SDL_Texture *sdl_texture = nullptr;
@@ -95,6 +97,12 @@ extern int SOUNDRATE;
 extern class nessound *ns;
 extern unsigned char soundenabled;
 static SDL_AudioStream *sdl_audio_stream = nullptr;
+static SDL_AudioDeviceID sdl_audio_device_id = 0;
+static std::atomic<unsigned> audio_underrun_callbacks{0};
+static std::atomic<unsigned> audio_underrun_samples{0};
+static std::atomic<unsigned> audio_overrun_samples{0};
+static std::atomic<unsigned> frame_skip_ticks{0};
+static std::atomic<int> audio_has_output{0};
 
 // From timing.h
 extern int TIMERSPEED;
@@ -109,9 +117,20 @@ void enable() { timerdisabled = 0; }
 void quitgame() { ActiveApp = 0; }
 
 static void shutdown_sdl_platform() {
+  if (developer_diagnostics) {
+    fprintf(stderr,
+            "[DIAG] audio underruns: callbacks=%u samples=%u, overruns=%u, "
+            "frame_skip_ticks=%u\n",
+            audio_underrun_callbacks.load(std::memory_order_relaxed),
+            audio_underrun_samples.load(std::memory_order_relaxed),
+            audio_overrun_samples.load(std::memory_order_relaxed),
+            frame_skip_ticks.load(std::memory_order_relaxed));
+    fflush(stderr);
+  }
   if (sdl_audio_stream) {
     SDL_DestroyAudioStream(sdl_audio_stream);
     sdl_audio_stream = nullptr;
+    sdl_audio_device_id = 0;
   }
   if (sdl_texture) {
     SDL_DestroyTexture(sdl_texture);
@@ -566,9 +585,14 @@ void clearprimary() {
 }
 
 void primaryoutput(short *buf, int nums) {
+  if (nums > 0)
+    audio_has_output.store(1, std::memory_order_relaxed);
   for (int i = 0; i < nums; i++) {
+    int next_write_pos = (primary_write_pos + 1) % PRIMARY_BUF_SIZE;
+    if (next_write_pos == primary_read_pos)
+      audio_overrun_samples.fetch_add(1, std::memory_order_relaxed);
     primary_buf[primary_write_pos] = buf[i];
-    primary_write_pos = (primary_write_pos + 1) % PRIMARY_BUF_SIZE;
+    primary_write_pos = next_write_pos;
   }
 }
 
@@ -596,14 +620,21 @@ static void SDLCALL sdl_audio_stream_callback(void *userdata,
   if (!out)
     return;
 
+  int underrun_in_callback = 0;
   for (int i = 0; i < samples; i++) {
     if (primary_read_pos != primary_write_pos) {
       out[i] = primary_buf[primary_read_pos];
       primary_read_pos = (primary_read_pos + 1) % PRIMARY_BUF_SIZE;
     } else {
       out[i] = 0;
+      if (audio_has_output.load(std::memory_order_relaxed)) {
+        underrun_in_callback = 1;
+        audio_underrun_samples.fetch_add(1, std::memory_order_relaxed);
+      }
     }
   }
+  if (underrun_in_callback)
+    audio_underrun_callbacks.fetch_add(1, std::memory_order_relaxed);
 
   SDL_PutAudioStreamData(stream, out, samples * (int)sizeof(short));
   if (out != stack_buf)
@@ -726,13 +757,19 @@ int main(int argc, char *argv[]) {
     sdl_scale = 3;
   else
     sdl_scale = 2;
-  // Allow --scale N override
+  // Allow --scale N and --dev-log overrides. First non-option is ROM path.
+  char *rom_arg = nullptr;
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--scale") == 0 && i + 1 < argc) {
       int s = atoi(argv[i + 1]);
       if (s >= 1 && s <= 5)
         sdl_scale = s;
       i++;
+    } else if (!strcmp(argv[i], "--dev-log") ||
+               !strcmp(argv[i], "--diagnostics")) {
+      developer_diagnostics = 1;
+    } else if (!rom_arg) {
+      rom_arg = argv[i];
     }
   }
   fprintf(stderr, "[DPI] scale=%dx (display scale=%.2f)\n", sdl_scale,
@@ -794,7 +831,13 @@ int main(int argc, char *argv[]) {
                                 sdl_audio_stream_callback, nullptr);
   if (sdl_audio_stream) {
     soundinstalled = 1;
+    sdl_audio_device_id = SDL_GetAudioStreamDevice(sdl_audio_stream);
     SDL_ResumeAudioStreamDevice(sdl_audio_stream);
+    if (developer_diagnostics) {
+      fprintf(stderr, "[DIAG] SDL3 audio stream opened: device=%u rate=%d\n",
+              (unsigned)sdl_audio_device_id, SOUNDRATE);
+      fflush(stderr);
+    }
   } else {
     fprintf(stderr, "[SDL3] audio disabled: %s\n", SDL_GetError());
   }
@@ -822,9 +865,9 @@ int main(int argc, char *argv[]) {
   fflush(stderr);
 
   // Command line ROM
-  if (argc > 1) {
+  if (rom_arg) {
     extern int cmd_runrom(char *p);
-    cmd_runrom(argv[1]);
+    cmd_runrom(rom_arg);
   }
 
   // Main loop
@@ -842,6 +885,46 @@ int main(int argc, char *argv[]) {
         switch (ev.type) {
         case SDL_EVENT_QUIT:
           done = 1;
+          break;
+        case SDL_EVENT_AUDIO_DEVICE_REMOVED:
+          if (!ev.adevice.recording && ev.adevice.which == sdl_audio_device_id &&
+              developer_diagnostics) {
+            fprintf(stderr, "[DIAG] SDL3 audio device removed: device=%u\n",
+                    (unsigned)ev.adevice.which);
+            fflush(stderr);
+          }
+          break;
+        case SDL_EVENT_AUDIO_DEVICE_ADDED:
+        case SDL_EVENT_AUDIO_DEVICE_FORMAT_CHANGED:
+          if (!ev.adevice.recording && sdl_audio_stream) {
+            SDL_ResumeAudioStreamDevice(sdl_audio_stream);
+            sdl_audio_device_id = SDL_GetAudioStreamDevice(sdl_audio_stream);
+            if (developer_diagnostics) {
+              fprintf(stderr,
+                      "[DIAG] SDL3 audio device event %u: stream device=%u\n",
+                      (unsigned)ev.type, (unsigned)sdl_audio_device_id);
+              fflush(stderr);
+            }
+          }
+          break;
+        case SDL_EVENT_WINDOW_MINIMIZED:
+        case SDL_EVENT_WINDOW_HIDDEN:
+          if (sdl_audio_stream)
+            SDL_PauseAudioStreamDevice(sdl_audio_stream);
+          break;
+        case SDL_EVENT_WINDOW_RESTORED:
+        case SDL_EVENT_WINDOW_SHOWN:
+          if (sdl_audio_stream)
+            SDL_ResumeAudioStreamDevice(sdl_audio_stream);
+          break;
+        case SDL_EVENT_GAMEPAD_ADDED:
+        case SDL_EVENT_GAMEPAD_REMOVED:
+        case SDL_EVENT_GAMEPAD_REMAPPED:
+          if (developer_diagnostics) {
+            fprintf(stderr, "[DIAG] SDL3 gamepad event %u: which=%u\n",
+                    (unsigned)ev.type, (unsigned)ev.gdevice.which);
+            fflush(stderr);
+          }
           break;
         case SDL_EVENT_KEY_DOWN: {
           if (ev.key.key == SDLK_RETURN && (ev.key.mod & SDL_KMOD_ALT)) {
@@ -885,6 +968,8 @@ int main(int argc, char *argv[]) {
       while (now >= lasttime + (Uint32)(1000 / TIMERSPEED)) {
         if (++numtimer < 5)
           gametimer();
+        else
+          frame_skip_ticks.fetch_add(1, std::memory_order_relaxed);
         lasttime += (1000 / TIMERSPEED);
       }
 
