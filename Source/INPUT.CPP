@@ -293,12 +293,15 @@ unsigned char gravis::gravtable[] = {
 //-------------------------------
 #define GAMEPAD_DEADZONE 8000
 
-static SDL_Gamepad *open_gamepad_slot(int slot) {
+static SDL_Gamepad *open_gamepad_slot(int slot, SDL_JoystickID *openedId) {
   int count = 0;
   SDL_JoystickID *gamepads = SDL_GetGamepads(&count);
   SDL_Gamepad *opened = 0;
-  if (gamepads && slot >= 0 && slot < count && SDL_IsGamepad(gamepads[slot]))
+  if (gamepads && slot >= 0 && slot < count && SDL_IsGamepad(gamepads[slot])) {
     opened = SDL_OpenGamepad(gamepads[slot]);
+    if (opened && openedId)
+      *openedId = gamepads[slot];
+  }
   if (gamepads)
     SDL_free(gamepads);
   return opened;
@@ -307,18 +310,20 @@ static SDL_Gamepad *open_gamepad_slot(int slot) {
 class sdlgamepad : public input {
   SDL_Gamepad *controller;
   int joystickSlot;  // slot in SDL_GetGamepads() result
+  SDL_JoystickID joystickId;
   padmap *pmptr;     // pointer to stored padmap
   padmap pm;         // local working copy
 
 public:
   sdlgamepad(int type, int sdlJoySlot)
-      : input(type), controller(0), joystickSlot(sdlJoySlot) {
+      : input(type), controller(0), joystickSlot(sdlJoySlot), joystickId(0) {
     int pmidx = (type == ID_GAMEPAD2) ? 1 : 0;
     pmptr = &ids->pm[pmidx];
     pm = *pmptr;
-    controller = open_gamepad_slot(joystickSlot);
-    fprintf(stderr, "[INPUT] sdlgamepad created: slot=%d controller=%p\n",
-            joystickSlot, (void *)controller);
+    controller = open_gamepad_slot(joystickSlot, &joystickId);
+    fprintf(stderr,
+            "[INPUT] sdlgamepad created: slot=%d id=%u controller=%p\n",
+            joystickSlot, (unsigned)joystickId, (void *)controller);
     fflush(stderr);
   }
 
@@ -333,6 +338,11 @@ public:
   virtual void savesettings() { *pmptr = pm; }
 
   virtual void read() {
+    if (controller && !SDL_GamepadConnected(controller)) {
+      SDL_CloseGamepad(controller);
+      controller = 0;
+    }
+
     if (!controller) {
       stat = 0;
       but = 0;
@@ -379,8 +389,11 @@ public:
 
   virtual void main() {
     if (!controller) {
-      // Attempt reconnect using stored gamepad slot.
-      controller = open_gamepad_slot(joystickSlot);
+      // Attempt reconnect using the previous instance id first, then slot.
+      if (joystickId && SDL_IsGamepad(joystickId))
+        controller = SDL_OpenGamepad(joystickId);
+      if (!controller)
+        controller = open_gamepad_slot(joystickSlot, &joystickId);
     }
   }
 };

@@ -22,6 +22,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **Timing/audio counters**: SDL3 audio underrun/overrun and skipped host-frame catch-up ticks are counted without changing the emulator timing constants.
 - **Save-state validation**: Save states now include a small magic/version/size/mapper header and are validated before emulator state is restored.
 - **Frame pacing after stalls**: Host catch-up after long pauses is now bounded without changing NESticle's timing constants.
+- **Gamepad reconnect handling**: SDL3 gamepads now close cleanly when disconnected and try to reopen by instance id before falling back to slot.
 
 ## [0.5.0] - 2026-03-17
 

@@ -80,9 +80,9 @@
 - [x] Keep existing emulator timing constants as the compatibility baseline
 
 ## Phase 13: Input & Gamepad Durability [PLANNED]
-- [ ] Add SDL3 gamepad hotplug handling
-- [ ] Improve multiple-controller discovery and assignment
-- [ ] Preserve remaps across reconnects and enumeration changes
+- [x] Add SDL3 gamepad hotplug handling
+- [x] Improve multiple-controller discovery and assignment
+- [x] Preserve remaps across reconnects and enumeration changes
 - [ ] Add deadzone tuning and mapping conflict diagnostics
 
 ## Phase 14: ROM & File UX Polish [PLANNED]
