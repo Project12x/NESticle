@@ -4,7 +4,7 @@
 
 #include "input.h"
 
-#define CONFIGVERSION 0x100
+#define CONFIGVERSION 0x101
 
 #define CFG_NOSOUND 0
 #define CFG_SB      1

@@ -383,12 +383,13 @@ protected:
   inputtestbutton *b[4];
 
   GUItextbutton *edit, *save;
+  GUIintedit *deadzone;
 
   object *lasto; // object that was bound to input
 
 public:
   changeinputdevice(int num, INPUTPTR &tin)
-      : GUIcontents(280, 170), in(tin), inputnum(num) {
+      : GUIcontents(280, 185), in(tin), inputnum(num) {
     if (NESTICLE_DEVLOG_ENABLED) {
       fprintf(stderr, "[INPUT] changeinputdevice(%d) in=%p\n", num,
               (void *)in);
@@ -402,6 +403,7 @@ public:
     int visibleItems = numdevices < 10 ? numdevices : 10;
     list = new GUIstringlistbox(this, 5, 15, 110, visibleItems, 10);
     edit = save = 0;
+    deadzone = 0;
 
     // Fill list box from dynamic device list
     ITEMPTR *a = list->resizeitems(numdevices);
@@ -426,23 +428,35 @@ public:
     }
 
     // Create initial buttons for the current device
-    edit = new GUItextbutton(this, " ", 5, 130);
-    save = new GUItextbutton(this, "Save settings", 5, 145);
+    deadzone = new GUIintedit(this, "Deadzone:", 120, 130, 85,
+                              GAMEPAD_DEFAULT_DEADZONE,
+                              GAMEPAD_MIN_DEADZONE, GAMEPAD_MAX_DEADZONE);
+    edit = new GUItextbutton(this, " ", 5, 145);
+    save = new GUItextbutton(this, "Save settings", 5, 160);
     updateEditButton();
   }
 
   void updateEditButton() {
     if (!edit) return;
+    if (deadzone) {
+      int *dz = in ? in->getgamepaddeadzone() : 0;
+      if (dz) {
+        deadzone->set(*dz);
+        deadzone->moveto(x1 + 5, y1 + 130);
+      } else {
+        deadzone->moveto(-200, -200);
+      }
+    }
     if (in && in->getjoythreshold()) {
       edit->settext("Calibrate...");
-      edit->moveto(x1 + 5, y1 + 130);
+      edit->moveto(x1 + 5, y1 + 145);
     } else if (in && in->getkeymap()) {
       edit->settext("Redefine keys...");
-      edit->moveto(x1 + 5, y1 + 130);
+      edit->moveto(x1 + 5, y1 + 145);
 #ifdef SDL3
     } else if (in && in->getpadmap()) {
       edit->settext("Redefine buttons...");
-      edit->moveto(x1 + 5, y1 + 130);
+      edit->moveto(x1 + 5, y1 + 145);
 #endif
     } else {
       // Hide the edit button by moving it offscreen
@@ -511,6 +525,9 @@ public:
     if (c == save)
       if (guimsg == GUIMSG_PUSHED) {
         if (in) {
+          int *dz = in->getgamepaddeadzone();
+          if (dz && deadzone)
+            *dz = deadzone->get();
           in->savesettings(); // save settings to ids
           lastintype = in->type;
           cfg->pinput[inputnum] = in->type;

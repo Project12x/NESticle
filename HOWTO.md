@@ -59,11 +59,11 @@ NESticle.exe path/to/game.nes
 ### Gamepad (SDL3 Gamepad)
 - D-pad and left stick for directional input
 - Default button mapping: South=NES B, East=NES A, Back=Select, Start=Start
-- Remap buttons via Settings -> Redefine input -> select gamepad -> "Redefine buttons..."
+- Remap buttons and tune left-stick deadzone via Settings -> Redefine input -> select gamepad
 
 ### Remapping Controls
 - **Keyboard**: Settings -> Redefine input -> select keyboard -> "Redefine keys..." -> press new key for each direction/button
-- **Gamepad**: Settings -> Redefine input -> select gamepad -> "Redefine buttons..." -> click a row, press the gamepad button to assign
+- **Gamepad**: Settings -> Redefine input -> select gamepad -> adjust "Deadzone" if needed, or choose "Redefine buttons..." -> click a row, press the gamepad button to assign
 
 ## Project Structure
 
@@ -96,7 +96,7 @@ Use `docs/verification.md` before tagging or sharing a release package.
 
 ## Developer Diagnostics
 
-Run with `--dev-log` or `--diagnostics` to print startup, GUI, ROM header/mapper, CPU reset, mixer mode, SDL3 audio, timing, and gamepad counters to stderr. Diagnostics stay out of the retro UI; normal launches only print failure details.
+Run with `--dev-log` or `--diagnostics` to print startup, GUI, ROM header/mapper, CPU reset, mixer mode, SDL3 audio, timing, gamepad counters, and duplicate button-map diagnostics to stderr. Diagnostics stay out of the retro UI; normal launches only print failure details.
 
 ## Save States
 

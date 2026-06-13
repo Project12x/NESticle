@@ -24,6 +24,10 @@
 #define ID_BUT2 0x40
 #define ID_BUT3 0x80
 
+#define GAMEPAD_DEFAULT_DEADZONE 8000
+#define GAMEPAD_MIN_DEADZONE 0
+#define GAMEPAD_MAX_DEADZONE 32767
+
 // defines keys for an input device
 struct keymap {
   char ul, u, ur;
@@ -87,6 +91,7 @@ public:
   virtual struct keymap *getkeymap() { return 0; }
   virtual struct joythreshold *getjoythreshold() { return 0; }
   virtual struct padmap *getpadmap() { return 0; }
+  virtual int *getgamepaddeadzone() { return 0; }
   virtual void savesettings() {} // save settings back to ids
 
   // bind/unbind input device to an object
@@ -121,6 +126,7 @@ struct inputdevicesettings {
 
   // gamepad button maps
   padmap pm[2];
+  int gamepad_deadzone[2];
 };
 
 #endif

@@ -83,7 +83,7 @@
 - [x] Add SDL3 gamepad hotplug handling
 - [x] Improve multiple-controller discovery and assignment
 - [x] Preserve remaps across reconnects and enumeration changes
-- [ ] Add deadzone tuning and mapping conflict diagnostics
+- [x] Add deadzone tuning and mapping conflict diagnostics
 
 ## Phase 14: ROM & File UX Polish [PLANNED]
 - [x] Keep the retro ROM dialog while improving path handling

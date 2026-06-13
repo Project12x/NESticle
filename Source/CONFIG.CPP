@@ -19,6 +19,10 @@ static int validpadbutton(int button) {
  return button>=0 && button<=31;
 }
 
+static int validdeadzone(int deadzone) {
+ return deadzone>=GAMEPAD_MIN_DEADZONE && deadzone<=GAMEPAD_MAX_DEADZONE;
+}
+
 static int validpadmap(const padmap &pm) {
  return pm.nesStart!=0 &&
         validpadbutton(pm.nesB) &&
@@ -39,6 +43,8 @@ static void normalizeconfig(config &c) {
   {
    if (!validpadmap(c.ids.pm[i]))
     c.ids.pm[i]=defpadmap;
+   if (!validdeadzone(c.ids.gamepad_deadzone[i]))
+    c.ids.gamepad_deadzone[i]=GAMEPAD_DEFAULT_DEADZONE;
   }
 
  c.lastromdir[sizeof(c.lastromdir)-1]=0;
@@ -58,6 +64,10 @@ config::config()
 
  ids.km[0]=defkeymap[0];
  ids.km[1]=defkeymap[1];
+ ids.pm[0]=defpadmap;
+ ids.pm[1]=defpadmap;
+ ids.gamepad_deadzone[0]=GAMEPAD_DEFAULT_DEADZONE;
+ ids.gamepad_deadzone[1]=GAMEPAD_DEFAULT_DEADZONE;
  set(CFG_FILLEDDLG,1);
 }
 

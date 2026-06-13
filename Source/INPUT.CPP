@@ -292,8 +292,6 @@ unsigned char gravis::gravtable[] = {
 // SDL3 Gamepad input
 // Supports XInput and DirectInput via SDL3's unified API
 //-------------------------------
-#define GAMEPAD_DEADZONE 8000
-
 static SDL_Gamepad *open_gamepad_slot(int slot, SDL_JoystickID *openedId) {
   int count = 0;
   SDL_JoystickID *gamepads = SDL_GetGamepads(&count);
@@ -308,12 +306,33 @@ static SDL_Gamepad *open_gamepad_slot(int slot, SDL_JoystickID *openedId) {
   return opened;
 }
 
+static void log_padmap_conflicts(int type, const padmap &pm) {
+  if (!NESTICLE_DEVLOG_ENABLED)
+    return;
+
+  int buttons[] = {pm.nesB, pm.nesA, pm.nesSelect, pm.nesStart};
+  const char *names[] = {"B", "A", "Select", "Start"};
+  for (int i = 0; i < 4; i++) {
+    for (int j = i + 1; j < 4; j++) {
+      if (buttons[i] == buttons[j]) {
+        fprintf(stderr,
+                "[INPUT] mapping conflict: type=%d NES %s and %s both use "
+                "SDL button %d\n",
+                type, names[i], names[j], buttons[i]);
+        fflush(stderr);
+      }
+    }
+  }
+}
+
 class sdlgamepad : public input {
   SDL_Gamepad *controller;
   int joystickSlot;  // slot in SDL_GetGamepads() result
   SDL_JoystickID joystickId;
   padmap *pmptr;     // pointer to stored padmap
   padmap pm;         // local working copy
+  int *deadzoneptr;
+  int deadzone;
 
 public:
   sdlgamepad(int type, int sdlJoySlot)
@@ -321,12 +340,17 @@ public:
     int pmidx = (type == ID_GAMEPAD2) ? 1 : 0;
     pmptr = &ids->pm[pmidx];
     pm = *pmptr;
+    deadzoneptr = &ids->gamepad_deadzone[pmidx];
+    deadzone = *deadzoneptr;
     controller = open_gamepad_slot(joystickSlot, &joystickId);
     if (NESTICLE_DEVLOG_ENABLED) {
       fprintf(stderr,
-              "[INPUT] sdlgamepad created: slot=%d id=%u controller=%p\n",
-              joystickSlot, (unsigned)joystickId, (void *)controller);
+              "[INPUT] sdlgamepad created: slot=%d id=%u controller=%p "
+              "deadzone=%d\n",
+              joystickSlot, (unsigned)joystickId, (void *)controller,
+              deadzone);
       fflush(stderr);
+      log_padmap_conflicts(type, pm);
     }
   }
 
@@ -338,7 +362,17 @@ public:
   }
 
   virtual padmap *getpadmap() { return &pm; }
-  virtual void savesettings() { *pmptr = pm; }
+  virtual int *getgamepaddeadzone() { return &deadzone; }
+  virtual void savesettings() {
+    *pmptr = pm;
+    *deadzoneptr = deadzone;
+    if (NESTICLE_DEVLOG_ENABLED) {
+      fprintf(stderr, "[INPUT] saved gamepad type=%d deadzone=%d\n", type,
+              deadzone);
+      fflush(stderr);
+      log_padmap_conflicts(type, pm);
+    }
+  }
 
   virtual void read() {
     if (controller && !SDL_GamepadConnected(controller)) {
@@ -366,13 +400,13 @@ public:
     int lx = SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTX);
     int ly = SDL_GetGamepadAxis(controller, SDL_GAMEPAD_AXIS_LEFTY);
 
-    if (dpadRight || lx > GAMEPAD_DEADZONE)
+    if (dpadRight || lx > deadzone)
       stat |= ID_RIGHT;
-    else if (dpadLeft || lx < -GAMEPAD_DEADZONE)
+    else if (dpadLeft || lx < -deadzone)
       stat |= ID_LEFT;
-    if (dpadDown || ly > GAMEPAD_DEADZONE)
+    if (dpadDown || ly > deadzone)
       stat |= ID_DOWN;
-    else if (dpadUp || ly < -GAMEPAD_DEADZONE)
+    else if (dpadUp || ly < -deadzone)
       stat |= ID_UP;
 
     // NES: B, A, Select, Start — use padmap for button assignment

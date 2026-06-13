@@ -28,6 +28,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - **File failure messages**: Battery saves, palette writes, ROM header writes, and snapshots now report create/read/write failures instead of silently continuing.
 - **Quiet default diagnostics**: Startup, GUI, input, ROM header, mapper, CPU reset, and mixer-mode details now print only with `--dev-log` / `--diagnostics`; failure messages still print normally.
 - **ROM dialog path handling**: The retro loader now strips extensions only from the filename portion, shows clipped long entries with `...`, and keeps command-line run/restore flows from advancing after a failed ROM load.
+- **Gamepad deadzone tuning**: SDL3 gamepad inputs now persist a per-player deadzone value in the retro input dialog, and `--dev-log` reports duplicate NES button mappings.
 
 ## [0.5.0] - 2026-03-17
 
