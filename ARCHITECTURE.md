@@ -90,6 +90,21 @@ NESticle is a Nintendo Entertainment System (NES) emulator originally created in
 - Trainer support, battery-backed RAM
 - Save states (snapshot)
 
+## Modernization Boundaries
+
+- Original uppercase source files remain the behavioral baseline. Touch them only for narrow compatibility, crash, or persistence fixes.
+- Lowercase shim files are the preferred home for host-platform work, diagnostics, packaging support, and SDL3 integration.
+- New mapper work belongs in `MMC.CPP/.H`; helper code should stay small and isolated.
+- Developer diagnostics must remain off by default and outside the retro UI unless explicitly enabled.
+- Compatibility fixes need evidence: a known ROM/test, mapper number, region/timing expectation, and observed failure.
+
+## Forward Roadmap Seams
+
+- **Compatibility matrix**: captures ROM/test name, mapper, mirroring, battery/trainer flags, observed behavior, and pass/fail notes.
+- **Mapper expansion**: starts from compatibility failures and references permissively licensed upstream source at pinned commits before implementation.
+- **Timing/PPU workbench**: adds developer-only traces for frame, scanline, sprite-0, IRQ, and frame pacing behavior.
+- **Release candidates**: depend on deterministic package hashes plus extracted-package startup, input, audio, settings, ROM, and save-state smoke checks.
+
 ## Data Flow (Per Frame)
 1. `gametimer()` called at 60Hz
 2. `tickemu()` runs VBlank cycles -> frame cycles via `m6502exec()`

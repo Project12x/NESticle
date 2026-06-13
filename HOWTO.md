@@ -94,6 +94,14 @@ The default mixer uses NES hardware DAC formulas (nonlinear). To switch to the o
 
 Use `docs/verification.md` before tagging or sharing a release package.
 
+## Compatibility Roadmap Workflow
+
+1. Pick a known ROM or NES test ROM and record its mapper, mirroring, trainer, battery, and region details.
+2. Run with `--dev-log` when diagnosing mapper, timing, audio, input, or package behavior.
+3. Classify any failure before changing code: mapper, CPU, PPU, APU, input, timing, save, or host-platform.
+4. For non-trivial mapper/timing work, inspect permissively licensed reference implementations at pinned commits and record the reuse mode.
+5. Keep fixes scoped to the existing seams: `MMC.CPP/.H` for mappers, lowercase shim files for host work, and uppercase original files only when the behavior fix requires it.
+
 ## Developer Diagnostics
 
 Run with `--dev-log` or `--diagnostics` to print startup, GUI, ROM header/mapper, CPU reset, mixer mode, SDL3 audio, timing, gamepad counters, and duplicate button-map diagnostics to stderr. Diagnostics stay out of the retro UI; normal launches only print failure details.

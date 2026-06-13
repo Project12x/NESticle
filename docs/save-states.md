@@ -27,3 +27,7 @@ The payload captures:
 - mapper-private state buffer
 
 The format is build-specific. It is intended for hardening against crashes and corrupt files, not for cross-version interchange.
+
+## Roadmap Notes
+
+Future save-state work should stay conservative: document newly captured fields, bump the version when layout changes, reject incompatible files before mutating emulator state, and tie compatibility changes to a specific ROM/test case.

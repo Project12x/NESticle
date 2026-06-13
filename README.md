@@ -29,10 +29,23 @@ NESticle v0.2 (Bloodlust Software, 1997) ported to modern Windows via SDL3.
 
 Unzip and run `NESticle.exe`. Requires `gui.vol`, `NESticle.pal`, and `SDL3.dll` in the same directory (included in release).
 
+## Current Roadmap
+
+The SDL3 improvement branch is feature-complete for the first modernization pass: deterministic packaging, startup/shutdown hardening, settings durability, save-state validation, developer diagnostics, gamepad durability, and ROM/file UX polish.
+
+Next work is compatibility-driven:
+
+- Build a known-ROM compatibility matrix without bundling ROMs
+- Prioritize mapper additions from observed failures
+- Add developer-only timing/PPU regression traces
+- Deepen audio and input verification across host devices
+- Record release-candidate evidence before tagging
+
 ## Known Issues
 
 - APU sound is the original NESticle core — not cycle-accurate
 - ~8 mappers supported (MMC 0-7)
+- Compatibility evidence is still manual and ROM-by-ROM
 
 ## License
 

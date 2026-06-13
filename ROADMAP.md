@@ -113,3 +113,33 @@
 - [x] Log mapper, mirroring, trainer, battery, and timing details
 - [x] Log audio underruns/overruns and input hotplug/remap events
 - [x] Keep diagnostics out of the retro UI unless explicitly enabled
+
+## Phase 19: Compatibility Characterization [PLANNED]
+- [ ] Build a known-ROM compatibility matrix without bundling ROMs
+- [ ] Record mapper, mirroring, trainer, battery, region, and observed behavior for each manual test
+- [ ] Classify failures as mapper, CPU, PPU, APU, input, timing, save, or host-platform issues
+- [ ] Preserve NESticle-visible quirks unless a crash, corruption, or documented incompatibility is being fixed
+
+## Phase 20: Mapper Coverage Expansion [PLANNED]
+- [ ] Prioritize mapper additions from the compatibility matrix instead of popularity alone
+- [ ] Inspect permissively licensed mapper implementations at pinned commits before design work
+- [ ] Add mapper diagnostics and rejection messages for unsupported or malformed cartridges
+- [ ] Keep new mapper code isolated to `MMC.CPP/.H` and small lowercase helper files when needed
+
+## Phase 21: Timing And PPU Regression Workbench [PLANNED]
+- [ ] Add developer-only frame, scanline, sprite-0, and IRQ trace modes
+- [ ] Compare behavior against accepted NES test ROM results without changing default presentation
+- [ ] Document each timing fix with the ROM/test that motivated it
+- [ ] Avoid broad cycle-accuracy rewrites unless a specific compatibility failure requires them
+
+## Phase 22: Audio And Input Verification Depth [PLANNED]
+- [ ] Add repeatable audio underrun and buffer-stability checks for long sessions
+- [ ] Document host audio device, sample rate, and buffer behavior in verification notes
+- [ ] Expand gamepad verification across XInput, DirectInput, Bluetooth, and hotplug cases
+- [ ] Keep NES controller semantics and retro remap UI unchanged
+
+## Phase 23: Release Candidate Discipline [PLANNED]
+- [ ] Create a release-candidate checklist with package hash, toolchain version, and manual smoke results
+- [ ] Verify extracted-package launch on a clean machine or VM
+- [ ] Keep license/provenance files current for SDL3 and fake6502
+- [ ] Tag only after packaging, startup, ROM, input, audio, settings, and save-state checks are recorded

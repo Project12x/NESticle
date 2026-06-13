@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Phase
-**SDL3 improvement branch — Feature Complete** — NESticle runs on modern Windows with SDL3, deterministic packaging, hardened settings/save-state/file handling, developer diagnostics, gamepad durability, and the original retro UI behavior preserved.
+**Next: Compatibility Characterization** — The SDL3 improvement branch is feature-complete for packaging, reliability, settings, diagnostics, input, timing/audio stability, and save-state hardening. The next roadmap focus is measured compatibility work: known-ROM matrices, mapper priorities, timing/PPU regression evidence, and release-candidate discipline while preserving NESticle's retro UI and visible quirks.
 
 ## Build Status
 - **Compiles**: Yes (MSVC 2022, CMake, SDL3)
@@ -27,7 +27,16 @@
 | Input system | Done | Keyboard + SDL Gamepad w/ button remapping |
 | NES nonlinear mixer | Done | Hardware DAC formulas with DC blocking filter |
 | Fullscreen | Done | ALT+ENTER toggle, SDL logical scaling |
+| Release packaging | Done | Deterministic SDL3 zip with assets, docs, and license notes |
+| Compatibility matrix | Planned | Manual known-ROM evidence, no bundled ROMs |
 
 ## Dependencies
 - SDL3 (zlib license)
 - fake6502 (public domain)
+
+## Current Roadmap Focus
+- Phase 19: Compatibility characterization
+- Phase 20: Mapper coverage expansion based on evidence
+- Phase 21: Timing and PPU regression workbench
+- Phase 22: Audio and input verification depth
+- Phase 23: Release-candidate discipline

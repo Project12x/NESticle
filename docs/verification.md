@@ -36,6 +36,8 @@ Use this checklist before tagging or sharing a release package. Do not commit or
 - [ ] Load at least one ROM using each supported mapper family when available.
 - [ ] Confirm rendering starts and the retro UI remains usable.
 - [ ] Confirm no bundled ROMs are present in the release zip.
+- [ ] Record ROM/test name, mapper, mirroring, trainer, battery, region, and observed result in release notes.
+- [ ] Classify failures before fixing them: mapper, CPU, PPU, APU, input, timing, save, or host-platform.
 
 ## Input
 
