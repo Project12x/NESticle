@@ -16,6 +16,7 @@
 #include "file.h"
 #include "message.h"
 #include "config.h"
+#include "save_state_format.h"
 
 #include "m6502\m6502.h"
 
@@ -639,40 +640,6 @@ public:
   void read(FILEIO &f) { f.read(this, sizeof(nesstate)); }
 };
 
-struct nesstatefileheader {
-  char magic[4];
-  unsigned version;
-  unsigned payload_size;
-  unsigned mapper;
-  unsigned flags;
-};
-
-#define NESTATE_VERSION 1
-
-static void initstateheader(nesstatefileheader &hdr) {
-  hdr.magic[0] = 'N';
-  hdr.magic[1] = 'S';
-  hdr.magic[2] = 'T';
-  hdr.magic[3] = 'A';
-  hdr.version = NESTATE_VERSION;
-  hdr.payload_size = sizeof(nesstate);
-  hdr.mapper = (unsigned char)romhdr.banktype;
-  hdr.flags = 0;
-}
-
-static int validstateheader(const nesstatefileheader &hdr, unsigned filesize) {
-  if (hdr.magic[0] != 'N' || hdr.magic[1] != 'S' || hdr.magic[2] != 'T' ||
-      hdr.magic[3] != 'A')
-    return 0;
-  if (hdr.version != NESTATE_VERSION)
-    return 0;
-  if (hdr.payload_size != sizeof(nesstate))
-    return 0;
-  if (hdr.mapper != (unsigned char)romhdr.banktype)
-    return 0;
-  return filesize >= sizeof(nesstatefileheader) + hdr.payload_size;
-}
-
 void m_savestate() {
   if (!romloaded) {
     msg.error("ROM not loaded");
@@ -682,8 +649,10 @@ void m_savestate() {
     return;
 
   char s[64];
-  strcpy(s, romfilename);
-  strcat(s, ".sta");
+  if (!nesticle_make_state_path(romfilename, s, sizeof(s))) {
+    msg.error("Unable to create state filename for %s", romfilename);
+    return;
+  }
 
   FILEIO f;
   if (f.create(s)) {
@@ -692,8 +661,9 @@ void m_savestate() {
   }
   nesstate *state = new nesstate; // create nes state
   state->save();                  // record nes state
-  nesstatefileheader hdr;
-  initstateheader(hdr);
+  nesticle_state_header hdr;
+  nesticle_init_state_header(hdr, sizeof(nesstate),
+                             (unsigned char)romhdr.banktype);
   if (f.write(&hdr, sizeof(hdr)) || f.write(state, sizeof(nesstate))) {
     delete state;
     f.close();
@@ -716,8 +686,10 @@ void m_loadstate() {
     return;
 
   char s[64];
-  strcpy(s, romfilename);
-  strcat(s, ".sta");
+  if (!nesticle_make_state_path(romfilename, s, sizeof(s))) {
+    msg.error("Unable to open state filename for %s", romfilename);
+    return;
+  }
 
   FILEIO f;
   if (f.open(s)) {
@@ -725,10 +697,13 @@ void m_loadstate() {
     return;
   }
 
-  nesstatefileheader hdr;
+  nesticle_state_header hdr;
   memset(&hdr, 0, sizeof(hdr));
   unsigned filesize = f.size();
-  if (f.read(&hdr, sizeof(hdr)) || !validstateheader(hdr, filesize)) {
+  if (f.read(&hdr, sizeof(hdr)) ||
+      !nesticle_valid_state_header(hdr, filesize,
+                                   (unsigned char)romhdr.banktype,
+                                   sizeof(nesstate))) {
     msg.error("Incompatible or corrupt state file %s", s);
     fprintf(stderr,
             "[STATE] rejected '%s': size=%u version=%u payload=%u mapper=%u "

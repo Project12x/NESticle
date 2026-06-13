@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 project(NESticle LANGUAGES C CXX)
+enable_testing()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
@@ -56,6 +57,7 @@ set(NESTICLE_SOURCES
     Source/PROF.CPP
     Source/SNAPSHOT.CPP
     Source/DISASM.CPP
+    Source/save_state_format.cpp
 )
 
 # New/replacement source files
@@ -80,6 +82,17 @@ target_include_directories(NESticle PRIVATE
 target_compile_definitions(NESticle PRIVATE SDL3)
 
 target_link_libraries(NESticle PRIVATE SDL3::SDL3)
+
+add_executable(save_state_format_tests
+    Source/save_state_format.cpp
+    tests/save_state_format_tests.cpp
+)
+
+target_include_directories(save_state_format_tests PRIVATE
+    Source
+)
+
+add_test(NAME save_state_format_tests COMMAND save_state_format_tests)
 
 # On Windows, link with WinMM for timeGetTime compatibility stubs
 if(WIN32)

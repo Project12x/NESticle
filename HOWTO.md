@@ -94,6 +94,15 @@ The default mixer uses NES hardware DAC formulas (nonlinear). To switch to the o
 
 Use `docs/verification.md` before tagging or sharing a release package.
 
+## Lightweight Regression Tests
+
+The SDL3 branch includes a small CMake regression harness for host-side save-state format checks:
+
+```powershell
+cmake --build build-sdl3 --config Debug --target save_state_format_tests
+ctest --test-dir build-sdl3 -C Debug --output-on-failure
+```
+
 ## Compatibility Roadmap Workflow
 
 1. Pick a known ROM or NES test ROM and record its mapper, mirroring, trainer, battery, and region details.
