@@ -97,3 +97,7 @@ Use `docs/verification.md` before tagging or sharing a release package.
 ## Developer Diagnostics
 
 Run with `--dev-log` or `--diagnostics` to print SDL3 audio, timing, and gamepad counters to stderr. Diagnostics stay out of the retro UI.
+
+## Save States
+
+Save states are validated before restore. See `docs/save-states.md` for the header, captured payload, and compatibility rules.

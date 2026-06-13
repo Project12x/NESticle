@@ -71,7 +71,7 @@
 - [x] Fix shutdown order, resource leaks, and null/lifetime hazards
 - [ ] Improve GUI focus/click edge cases without changing visual style
 - [x] Harden fullscreen transitions and bad-path handling
-- [ ] Validate file create/read/write failures before mutating state
+- [x] Validate file create/read/write failures before mutating state
 
 ## Phase 12: Timing & Audio Stability [PLANNED]
 - [x] Add SDL3 audio underrun/overrun counters
@@ -98,10 +98,10 @@
 - [x] Avoid silently resetting valid user input mappings
 
 ## Phase 16: Save-State Hardening [PLANNED]
-- [ ] Add save-state magic, version, payload size, mapper id, and flags
-- [ ] Validate state files before mutating emulator state
-- [ ] Reject incompatible state files cleanly
-- [ ] Document captured state and compatibility rules
+- [x] Add save-state magic, version, payload size, mapper id, and flags
+- [x] Validate state files before mutating emulator state
+- [x] Reject incompatible state files cleanly
+- [x] Document captured state and compatibility rules
 
 ## Phase 17: Packaging & Verification [PLANNED]
 - [x] Add deterministic package output with executable, SDL3 DLL, assets, docs, and license notes

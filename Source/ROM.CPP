@@ -520,6 +520,40 @@ public:
   void read(FILEIO &f) { f.read(this, sizeof(nesstate)); }
 };
 
+struct nesstatefileheader {
+  char magic[4];
+  unsigned version;
+  unsigned payload_size;
+  unsigned mapper;
+  unsigned flags;
+};
+
+#define NESTATE_VERSION 1
+
+static void initstateheader(nesstatefileheader &hdr) {
+  hdr.magic[0] = 'N';
+  hdr.magic[1] = 'S';
+  hdr.magic[2] = 'T';
+  hdr.magic[3] = 'A';
+  hdr.version = NESTATE_VERSION;
+  hdr.payload_size = sizeof(nesstate);
+  hdr.mapper = (unsigned char)romhdr.banktype;
+  hdr.flags = 0;
+}
+
+static int validstateheader(const nesstatefileheader &hdr, unsigned filesize) {
+  if (hdr.magic[0] != 'N' || hdr.magic[1] != 'S' || hdr.magic[2] != 'T' ||
+      hdr.magic[3] != 'A')
+    return 0;
+  if (hdr.version != NESTATE_VERSION)
+    return 0;
+  if (hdr.payload_size != sizeof(nesstate))
+    return 0;
+  if (hdr.mapper != (unsigned char)romhdr.banktype)
+    return 0;
+  return filesize >= sizeof(nesstatefileheader) + hdr.payload_size;
+}
+
 void m_savestate() {
   if (!romloaded) {
     msg.error("ROM not loaded");
@@ -533,10 +567,20 @@ void m_savestate() {
   strcat(s, ".sta");
 
   FILEIO f;
-  f.create(s);
+  if (f.create(s)) {
+    msg.error("Unable to create %s", s);
+    return;
+  }
   nesstate *state = new nesstate; // create nes state
   state->save();                  // record nes state
-  state->write(f);                // write to file
+  nesstatefileheader hdr;
+  initstateheader(hdr);
+  if (f.write(&hdr, sizeof(hdr)) || f.write(state, sizeof(nesstate))) {
+    delete state;
+    f.close();
+    msg.error("Unable to write game state %s", s);
+    return;
+  }
   delete state;                   // free state
   f.close();
 
@@ -562,8 +606,28 @@ void m_loadstate() {
     return;
   }
 
+  nesstatefileheader hdr;
+  memset(&hdr, 0, sizeof(hdr));
+  unsigned filesize = f.size();
+  if (f.read(&hdr, sizeof(hdr)) || !validstateheader(hdr, filesize)) {
+    msg.error("Incompatible or corrupt state file %s", s);
+    fprintf(stderr,
+            "[STATE] rejected '%s': size=%u version=%u payload=%u mapper=%u "
+            "current_mapper=%u\n",
+            s, filesize, hdr.version, hdr.payload_size, hdr.mapper,
+            (unsigned)(unsigned char)romhdr.banktype);
+    fflush(stderr);
+    f.close();
+    return;
+  }
+
   nesstate *state = new nesstate; // create nes state
-  state->read(f);                 // read from file
+  if (f.read(state, sizeof(nesstate))) {
+    delete state;
+    f.close();
+    msg.error("Unable to read game state %s", s);
+    return;
+  }
   msg.printf(1, "Game state restored from %s", s);
 
   resetNEShardware();
